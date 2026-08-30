@@ -1,3 +1,13 @@
+output "cloudflare_zone_id" {
+  description = "Cloudflare zone ID for the Dear Paw domain."
+  value       = cloudflare_zone.site.id
+}
+
+output "cloudflare_name_servers" {
+  description = "Cloudflare-assigned authoritative name servers. Configure these at the domain registrar."
+  value       = cloudflare_zone.site.name_servers
+}
+
 output "d1_database_id" {
   description = "Cloudflare D1 database ID."
   value       = cloudflare_d1_database.app.id
@@ -32,4 +42,3 @@ output "ses_dkim_tokens" {
   description = "SES Easy DKIM tokens, also used to create Cloudflare CNAME records."
   value       = local.ses_dkim_tokens
 }
-

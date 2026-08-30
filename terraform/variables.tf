@@ -9,11 +9,6 @@ variable "cloudflare_account_id" {
   type        = string
 }
 
-variable "cloudflare_zone_id" {
-  description = "Cloudflare zone ID for the Dear Paw domain."
-  type        = string
-}
-
 variable "domain_name" {
   description = "Primary Dear Paw domain."
   type        = string

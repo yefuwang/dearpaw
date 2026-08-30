@@ -1,3 +1,11 @@
+resource "cloudflare_zone" "site" {
+  account = {
+    id = var.cloudflare_account_id
+  }
+  name = var.domain_name
+  type = "full"
+}
+
 resource "cloudflare_d1_database" "app" {
   account_id            = var.cloudflare_account_id
   name                  = "${local.project_name}-app"
@@ -51,7 +59,7 @@ resource "cloudflare_turnstile_widget" "forms" {
 resource "cloudflare_dns_record" "ses_dkim" {
   count = 3
 
-  zone_id = var.cloudflare_zone_id
+  zone_id = cloudflare_zone.site.id
   name    = "${local.ses_dkim_tokens[count.index]}._domainkey.${var.domain_name}"
   type    = "CNAME"
   content = "${local.ses_dkim_tokens[count.index]}.dkim.amazonses.com"
@@ -61,7 +69,7 @@ resource "cloudflare_dns_record" "ses_dkim" {
 }
 
 resource "cloudflare_dns_record" "ses_mail_from_mx" {
-  zone_id  = var.cloudflare_zone_id
+  zone_id  = cloudflare_zone.site.id
   name     = local.mail_from_domain
   type     = "MX"
   content  = "feedback-smtp.${var.aws_region}.amazonses.com"
@@ -72,7 +80,7 @@ resource "cloudflare_dns_record" "ses_mail_from_mx" {
 }
 
 resource "cloudflare_dns_record" "ses_mail_from_spf" {
-  zone_id = var.cloudflare_zone_id
+  zone_id = cloudflare_zone.site.id
   name    = local.mail_from_domain
   type    = "TXT"
   content = "v=spf1 include:amazonses.com ~all"
@@ -82,7 +90,7 @@ resource "cloudflare_dns_record" "ses_mail_from_spf" {
 }
 
 resource "cloudflare_dns_record" "dmarc" {
-  zone_id = var.cloudflare_zone_id
+  zone_id = cloudflare_zone.site.id
   name    = "_dmarc.${var.domain_name}"
   type    = "TXT"
   content = "v=DMARC1; p=none; rua=mailto:postmaster@${var.domain_name}"
@@ -90,4 +98,3 @@ resource "cloudflare_dns_record" "dmarc" {
   proxied = false
   comment = "Starter DMARC policy for SES; tighten after mail flow is verified"
 }
-

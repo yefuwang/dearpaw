@@ -5,6 +5,7 @@ This directory is intended to be the Spacelift-monitored infrastructure root.
 ## What It Creates
 
 - Cloudflare D1 database with read replication enabled.
+- Cloudflare DNS zone for `dearpaw.rip`.
 - Cloudflare R2 bucket for private uploads, proofs, generated assets, videos, and model files.
 - Cloudflare Queue for async jobs.
 - Cloudflare Turnstile widget for public forms.
@@ -19,7 +20,6 @@ Set these in Spacelift:
 
 ```hcl
 cloudflare_account_id = "..."
-cloudflare_zone_id    = "..."
 ```
 
 Optional variables:
@@ -40,5 +40,6 @@ r2_location              = null
 ## Notes
 
 - If any DNS records already exist in Cloudflare, import them into Terraform state before applying.
+- After the zone is created, set the Cloudflare-assigned name servers at the domain registrar.
 - SES verification can take time after DNS records are created.
 - The DMARC policy starts at `p=none`; tighten it only after SES sending is verified.
