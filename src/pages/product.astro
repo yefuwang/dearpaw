@@ -1,0 +1,45 @@
+---
+import { OrderConfigurator } from "../components/OrderConfigurator";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="The Portrait Urn | Dear Paw" description="A custom wooden pet urn with a carved portrait created from your pet's photographs.">
+  <section class="section">
+    <div class="container split">
+      <div>
+        <p class="eyebrow">Flagship product</p>
+        <h1 class="display">The Portrait Urn</h1>
+        <p class="lede">A premium wooden urn with a shallow relief portrait created from photographs of your pet.</p>
+        <div class="hero-media" style="min-height: 460px;">
+          <img src="/images/portrait-urn-hero.png" alt="A development rendering of a wooden memorial urn with a carved pet portrait." />
+          <span class="image-note">Development product rendering</span>
+        </div>
+      </div>
+      <div class="panel">
+        <OrderConfigurator client:load />
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="container card-grid">
+      <article class="info-card">
+        <h3>Recognizable</h3>
+        <p>The portrait should feel like your companion, not a generic breed silhouette.</p>
+      </article>
+      <article class="info-card">
+        <h3>Restrained</h3>
+        <p>The relief is designed to work naturally with real wood and CNC carving.</p>
+      </article>
+      <article class="info-card">
+        <h3>Approved first</h3>
+        <p>You review the portrait before production begins.</p>
+      </article>
+      <article class="info-card">
+        <h3>Configurable</h3>
+        <p>Sizes, woods, and pricing are structured to change as the product is finalized.</p>
+      </article>
+    </div>
+  </section>
+</BaseLayout>
+

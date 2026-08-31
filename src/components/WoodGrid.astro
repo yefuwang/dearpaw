@@ -1,0 +1,16 @@
+---
+import { woods } from "../data/site";
+---
+
+<div class="wood-grid">
+  {
+    woods.map((wood) => (
+      <article class="wood-card">
+        <div class="swatch" style={`background: linear-gradient(135deg, ${wood.color}, rgba(255,250,241,.34)), repeating-linear-gradient(90deg, rgba(46,42,36,.1), rgba(46,42,36,.1) 2px, transparent 2px, transparent 13px);`} />
+        <h3>{wood.name}</h3>
+        <p>{wood.note}</p>
+      </article>
+    ))
+  }
+</div>
+

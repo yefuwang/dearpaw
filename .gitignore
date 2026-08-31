@@ -1,4 +1,9 @@
 .env
 .env.*
 !.env.example
-
+.spacelift.env
+.cache/
+.astro/
+.wrangler/
+dist/
+node_modules/

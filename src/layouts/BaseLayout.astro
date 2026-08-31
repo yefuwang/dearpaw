@@ -1,0 +1,69 @@
+---
+import "../styles/global.css";
+import { navItems } from "../data/site";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Dear Paw | Custom wooden pet memorials",
+  description = "Dear Paw creates custom wooden pet memorials carved in the likeness of the animal they are made to remember.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/images/portrait-urn-hero.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;520;650;750&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="container nav" aria-label="Primary navigation">
+        <a class="brand" href="/">
+          <span class="brand-name">Dear Paw</span>
+          <span class="brand-domain">dearpaw.rip</span>
+        </a>
+        <div class="nav-links">
+          {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
+        </div>
+        <a class="button secondary" href="/order">Create a memorial</a>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a class="brand" href="/">
+            <span class="brand-name">Dear Paw</span>
+            <span class="brand-domain">dearpaw.rip</span>
+          </a>
+          <p>Personal. Beautiful. Lasting.</p>
+        </div>
+        <div class="footer-links">
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/shipping">Shipping</a>
+          <a href="/returns">Returns</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
+

@@ -1,0 +1,25 @@
+---
+import { OrderConfigurator } from "../components/OrderConfigurator";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Create a Memorial | Dear Paw" description="Start a Dear Paw custom pet memorial order.">
+  <section class="section">
+    <div class="container split">
+      <div>
+        <p class="eyebrow">Start</p>
+        <h1 class="display">Create their memorial.</h1>
+        <p class="lede">This order flow is an MVP surface. The next backend step is persisting drafts, photo upload metadata, and Stripe checkout state.</p>
+        <ul class="quiet-list">
+          <li>Minimum photo guidance: 3 photos.</li>
+          <li>Preferred photo guidance: 5 to 10 photos.</li>
+          <li>HEIC, JPEG, PNG, and WEBP should be supported before launch.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <OrderConfigurator client:load />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+

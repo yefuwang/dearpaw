@@ -1,0 +1,114 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import FaqList from "../components/FaqList.astro";
+import ProcessSteps from "../components/ProcessSteps.astro";
+import WoodGrid from "../components/WoodGrid.astro";
+---
+
+<BaseLayout
+  title="Dear Paw | A memorial made in their likeness"
+  description="Custom wooden pet memorials created from your pet's photographs and carved in real wood."
+>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">Custom wooden pet memorials</p>
+        <h1 class="display">A memorial made in their likeness.</h1>
+        <p class="lede">Made from their photos. Carved in wood. Created for one unforgettable companion.</p>
+        <div class="hero-actions">
+          <a class="button" href="/order">Create a memorial</a>
+          <a class="button secondary" href="/how-it-works">See how it works</a>
+        </div>
+      </div>
+      <div class="hero-media">
+        <img src="/images/portrait-urn-hero.png" alt="A realistic placeholder image of a wooden memorial urn with a carved dog portrait on a shelf." />
+        <span class="image-note">Development product rendering</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split">
+      <div class="section-header">
+        <p class="eyebrow">The difference</p>
+        <h2>Most urns could belong to any pet.</h2>
+      </div>
+      <div>
+        <p class="lede">Dear Paw creates a wooden memorial around the animal you loved: their face, their shape, their expression, and the small things that made them recognizable.</p>
+        <p>Technology stays behind the scenes. The promise is simple: you share their photographs, we create a portrait designed for wood, and you approve it before carving begins.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt" id="process">
+    <div class="container">
+      <div class="section-header">
+        <p class="eyebrow">Process</p>
+        <h2>Clear before anything is carved.</h2>
+      </div>
+      <ProcessSteps />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <p class="eyebrow">Portrait journey</p>
+        <h2>Photo to portrait to finished memorial.</h2>
+        <p class="lede">This section will use real customer-approved examples as soon as they exist. For now it shows the structure the site needs to explain the product quickly.</p>
+      </div>
+      <div class="comparison">
+        <article class="comparison-item">
+          <div class="comparison-visual"></div>
+          <h3>Pet photographs</h3>
+          <p>Several angles help us understand likeness and structure.</p>
+        </article>
+        <article class="comparison-item">
+          <div class="comparison-visual"></div>
+          <h3>Carving portrait</h3>
+          <p>A restrained interpretation, designed for shallow relief.</p>
+        </article>
+        <article class="comparison-item">
+          <div class="comparison-visual"></div>
+          <h3>Wood memorial</h3>
+          <p>The approved portrait is carved and individually finished.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="container">
+      <div class="section-header">
+        <p class="eyebrow">Materials</p>
+        <h2>Natural woods, quietly finished.</h2>
+      </div>
+      <WoodGrid />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split">
+      <div>
+        <p class="eyebrow">Approval promise</p>
+        <h2>See their portrait before we carve it.</h2>
+      </div>
+      <div class="panel">
+        <p class="lede">We do not carve the final piece until you approve the portrait.</p>
+        <p>This is the most important trust point in the experience and will carry through order emails, proof links, and the future customer portal.</p>
+        <a class="button" href="/product">View the product</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="container">
+      <div class="section-header">
+        <p class="eyebrow">Questions</p>
+        <h2>Practical answers, without pressure.</h2>
+      </div>
+      <FaqList />
+    </div>
+  </section>
+</BaseLayout>
+

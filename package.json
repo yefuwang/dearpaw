@@ -1,0 +1,27 @@
+{
+  "name": "dearpaw",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "XDG_CONFIG_HOME=.cache ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "build": "XDG_CONFIG_HOME=.cache ASTRO_TELEMETRY_DISABLED=1 astro check && XDG_CONFIG_HOME=.cache ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "preview": "XDG_CONFIG_HOME=.cache wrangler dev",
+    "deploy": "XDG_CONFIG_HOME=.cache ASTRO_TELEMETRY_DISABLED=1 astro build && XDG_CONFIG_HOME=.cache wrangler deploy",
+    "check": "XDG_CONFIG_HOME=.cache ASTRO_TELEMETRY_DISABLED=1 astro check"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^14.2.5",
+    "@astrojs/react": "^6.0.4",
+    "astro": "^7.2.9",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.0.0"
+  }
+}

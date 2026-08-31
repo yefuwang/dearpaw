@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Contact | Dear Paw" description="Contact Dear Paw with questions about custom wooden pet memorials.">
+  <section class="section">
+    <div class="container split">
+      <div>
+        <p class="eyebrow">Contact</p>
+        <h1 class="display">Ask a question before you begin.</h1>
+        <p class="lede">Use this form for product, photo, or timing questions. Support language should stay patient and direct.</p>
+      </div>
+      <form class="panel form-grid" method="post" action="/api/contact">
+        <label>
+          Name
+          <input name="name" autocomplete="name" required />
+        </label>
+        <label>
+          Email
+          <input name="email" type="email" autocomplete="email" required />
+        </label>
+        <label>
+          Message
+          <textarea name="message" required></textarea>
+        </label>
+        <button class="button" type="submit">Send message</button>
+      </form>
+    </div>
+  </section>
+</BaseLayout>
+
