@@ -8,6 +8,11 @@ output "cloudflare_name_servers" {
   value       = cloudflare_zone.site.name_servers
 }
 
+output "worker_custom_domain" {
+  description = "Hostname attached to the Dear Paw Worker."
+  value       = cloudflare_workers_custom_domain.apex.hostname
+}
+
 output "d1_database_id" {
   description = "Cloudflare D1 database ID."
   value       = cloudflare_d1_database.app.id

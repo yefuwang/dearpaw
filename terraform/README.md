@@ -6,13 +6,14 @@ This directory is intended to be the Spacelift-monitored infrastructure root.
 
 - Cloudflare D1 database with read replication enabled.
 - Cloudflare DNS zone for `dearpaw.rip`.
+- Cloudflare Worker custom domain for `dearpaw.rip`.
 - Cloudflare R2 bucket for private uploads, proofs, generated assets, videos, and model files.
 - Cloudflare Queue for async jobs.
 - Cloudflare Turnstile widget for public forms.
 - AWS SES domain identity and transactional configuration set.
 - Cloudflare DNS records required for SES Easy DKIM, custom MAIL FROM, SPF, and starter DMARC.
 
-The Worker application and custom domain are intentionally not created yet because the web app build output and Worker entrypoint do not exist in the repository.
+The Worker application code is deployed by GitHub Actions. Terraform owns the custom domain attachment for the deployed `dearpaw` Worker service.
 
 ## Required Variables
 

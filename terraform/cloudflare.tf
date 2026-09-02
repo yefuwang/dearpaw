@@ -56,6 +56,14 @@ resource "cloudflare_turnstile_widget" "forms" {
   clearance_level = "no_clearance"
 }
 
+resource "cloudflare_workers_custom_domain" "apex" {
+  account_id = var.cloudflare_account_id
+  hostname   = var.domain_name
+  service    = local.worker_name
+  zone_id    = cloudflare_zone.site.id
+  zone_name  = cloudflare_zone.site.name
+}
+
 resource "cloudflare_dns_record" "ses_dkim" {
   count = 3
 
