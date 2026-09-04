@@ -10,6 +10,9 @@ export function OrderConfigurator() {
   const [species, setSpecies] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "created" | "error">("idle");
   const [orderId, setOrderId] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
+  const [uploadName, setUploadName] = useState("");
 
   const selectedSize = useMemo(
     () => productOptions.sizes.find((size) => size.id === sizeId) ?? productOptions.sizes[1],
@@ -43,6 +46,32 @@ export function OrderConfigurator() {
     const result = (await response.json()) as { orderId: string };
     setOrderId(result.orderId);
     setStatus("created");
+  }
+
+  async function uploadPhoto() {
+    if (!orderId || !photo) {
+      setUploadStatus("error");
+      return;
+    }
+
+    setUploadStatus("uploading");
+
+    const form = new FormData();
+    form.set("photo", photo);
+
+    const response = await fetch(`/api/order-drafts/${orderId}/uploads`, {
+      method: "POST",
+      body: form,
+    });
+
+    if (!response.ok) {
+      setUploadStatus("error");
+      return;
+    }
+
+    const result = (await response.json()) as { filename: string };
+    setUploadName(result.filename);
+    setUploadStatus("uploaded");
   }
 
   return (
@@ -156,6 +185,28 @@ export function OrderConfigurator() {
         )}
         {status === "error" && <p className="form-status error">Enter your name, email, pet name, size, and wood.</p>}
       </div>
+
+      {status === "created" && (
+        <section className="upload-panel" aria-labelledby="photo-heading">
+          <h3 id="photo-heading">Add a photo</h3>
+          <label>
+            Pet photo
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              onChange={(event) => {
+                setPhoto(event.target.files?.[0] ?? null);
+                setUploadStatus("idle");
+              }}
+            />
+          </label>
+          <button className="button secondary" type="button" onClick={uploadPhoto} disabled={!photo || uploadStatus === "uploading"}>
+            {uploadStatus === "uploading" ? "Uploading..." : "Upload photo"}
+          </button>
+          {uploadStatus === "uploaded" && <p className="form-status success">Uploaded: {uploadName}</p>}
+          {uploadStatus === "error" && <p className="form-status error">Choose a JPEG, PNG, WEBP, HEIC, or HEIF under 10 MB.</p>}
+        </section>
+      )}
     </div>
   );
 }
