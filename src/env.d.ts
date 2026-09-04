@@ -14,3 +14,6 @@ interface Env {
   TURNSTILE_SITEKEY: string;
 }
 
+declare module "cloudflare:workers" {
+  export const env: Env;
+}

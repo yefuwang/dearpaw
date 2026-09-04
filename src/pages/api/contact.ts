@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
@@ -12,7 +13,19 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response("Missing required fields.", { status: 400 });
   }
 
-  // TODO(APP): Persist contact requests and send SES email once the database schema is applied.
+  await env.DB.prepare(
+    `INSERT INTO contact_requests (id, name, email, message, user_agent, ip_address)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      crypto.randomUUID(),
+      name,
+      email.toLowerCase(),
+      message,
+      request.headers.get("user-agent"),
+      request.headers.get("cf-connecting-ip"),
+    )
+    .run();
+
   return new Response("Thanks. We received your message.", { status: 202 });
 };
-

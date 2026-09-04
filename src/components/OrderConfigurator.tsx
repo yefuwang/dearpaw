@@ -4,15 +4,74 @@ import { productOptions } from "../data/site";
 export function OrderConfigurator() {
   const [sizeId, setSizeId] = useState(productOptions.sizes[1].id);
   const [wood, setWood] = useState(productOptions.woods[0]);
+  const [customerName, setCustomerName] = useState("");
+  const [email, setEmail] = useState("");
   const [petName, setPetName] = useState("");
+  const [species, setSpecies] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "created" | "error">("idle");
+  const [orderId, setOrderId] = useState("");
 
   const selectedSize = useMemo(
     () => productOptions.sizes.find((size) => size.id === sizeId) ?? productOptions.sizes[1],
     [sizeId],
   );
 
+  async function submitDraft() {
+    setStatus("submitting");
+    setOrderId("");
+
+    const response = await fetch("/api/order-drafts", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        customerName,
+        email,
+        petName,
+        species,
+        sizeId,
+        wood,
+      }),
+    });
+
+    if (!response.ok) {
+      setStatus("error");
+      return;
+    }
+
+    const result = (await response.json()) as { orderId: string };
+    setOrderId(result.orderId);
+    setStatus("created");
+  }
+
   return (
     <div className="configurator">
+      <section aria-labelledby="customer-heading">
+        <h3 id="customer-heading">Your details</h3>
+        <div className="field-pair">
+          <label>
+            Name
+            <input
+              value={customerName}
+              onChange={(event) => setCustomerName(event.target.value)}
+              autoComplete="name"
+              required
+            />
+          </label>
+          <label>
+            Email
+            <input
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              type="email"
+              autoComplete="email"
+              required
+            />
+          </label>
+        </div>
+      </section>
+
       <section aria-labelledby="size-heading">
         <h3 id="size-heading">Choose a size</h3>
         <div className="choice-grid">
@@ -60,6 +119,16 @@ export function OrderConfigurator() {
         />
       </label>
 
+      <label>
+        Pet type
+        <select value={species} onChange={(event) => setSpecies(event.target.value)}>
+          <option value="">Not set</option>
+          <option value="dog">Dog</option>
+          <option value="cat">Cat</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+
       <div className="summary-box" aria-live="polite">
         <div className="summary-row">
           <span>Memorial</span>
@@ -79,9 +148,14 @@ export function OrderConfigurator() {
         </div>
         <p className="price">${selectedSize.price}</p>
         <p>Placeholder pricing. Final dimensions, capacities, and production timing still need business confirmation.</p>
-        <a className="button" href="/order">Continue</a>
+        <button className="button" type="button" onClick={submitDraft} disabled={status === "submitting"}>
+          {status === "submitting" ? "Saving..." : "Save draft"}
+        </button>
+        {status === "created" && (
+          <p className="form-status success">Draft saved. Reference: {orderId.slice(0, 8)}</p>
+        )}
+        {status === "error" && <p className="form-status error">Enter your name, email, pet name, size, and wood.</p>}
       </div>
     </div>
   );
 }
-
