@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type SyntheticEvent, useMemo, useState } from "react";
 import { productOptions } from "../data/site";
 
 export function OrderConfigurator() {
@@ -10,6 +10,7 @@ export function OrderConfigurator() {
   const [species, setSpecies] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "created" | "error">("idle");
   const [orderId, setOrderId] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
   const [uploadName, setUploadName] = useState("");
@@ -19,31 +20,50 @@ export function OrderConfigurator() {
     [sizeId],
   );
 
-  async function submitDraft() {
+  async function submitDraft(event: SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
     setStatus("submitting");
     setOrderId("");
+    setErrorMessage("");
 
-    const response = await fetch("/api/order-drafts", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        customerName,
-        email,
-        petName,
-        species,
-        sizeId,
-        wood,
-      }),
-    });
+    let response: Response;
 
-    if (!response.ok) {
+    try {
+      response = await fetch("/api/order-drafts", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          customerName,
+          email,
+          petName,
+          species,
+          sizeId,
+          wood,
+        }),
+      });
+    } catch {
+      setErrorMessage("We could not reach the order service. Please try again.");
       setStatus("error");
       return;
     }
 
-    const result = (await response.json()) as { orderId: string };
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      setErrorMessage(result?.error ?? "We could not save this draft. Please try again.");
+      setStatus("error");
+      return;
+    }
+
+    const result = (await response.json().catch(() => null)) as { orderId?: string } | null;
+
+    if (!result?.orderId) {
+      setErrorMessage("The order service returned an unexpected response. Please try again.");
+      setStatus("error");
+      return;
+    }
+
     setOrderId(result.orderId);
     setStatus("created");
   }
@@ -75,7 +95,7 @@ export function OrderConfigurator() {
   }
 
   return (
-    <div className="configurator">
+    <form className="configurator" onSubmit={submitDraft}>
       <section aria-labelledby="customer-heading">
         <h3 id="customer-heading">Your details</h3>
         <div className="field-pair">
@@ -145,6 +165,7 @@ export function OrderConfigurator() {
           onChange={(event) => setPetName(event.target.value)}
           placeholder="Amber"
           autoComplete="off"
+          required
         />
       </label>
 
@@ -177,7 +198,7 @@ export function OrderConfigurator() {
         </div>
         <p className="price">${selectedSize.price}</p>
         <p>Placeholder pricing. Final dimensions, capacities, and production timing still need business confirmation.</p>
-        <button className="button" type="button" onClick={submitDraft} disabled={status === "submitting"}>
+        <button className="button" type="submit" disabled={status === "submitting"}>
           {status === "submitting" ? "Saving..." : "Save draft"}
         </button>
         {status === "created" && (
@@ -187,7 +208,7 @@ export function OrderConfigurator() {
             <a href={`/track?orderId=${encodeURIComponent(orderId)}`}>Track this draft</a>
           </div>
         )}
-        {status === "error" && <p className="form-status error">Enter your name, email, pet name, size, and wood.</p>}
+        {status === "error" && <p className="form-status error">{errorMessage}</p>}
       </div>
 
       {status === "created" && (
@@ -211,6 +232,6 @@ export function OrderConfigurator() {
           {uploadStatus === "error" && <p className="form-status error">Choose a JPEG, PNG, WEBP, HEIC, or HEIF under 10 MB.</p>}
         </section>
       )}
-    </div>
+    </form>
   );
 }

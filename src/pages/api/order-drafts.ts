@@ -4,29 +4,29 @@ import { productOptions } from "../../data/site";
 
 export const prerender = false;
 
-type OrderDraftInput = {
-  customerName?: string;
-  email?: string;
-  petName?: string;
-  species?: string;
-  sizeId?: string;
-  wood?: string;
-};
-
 const validSizeIds = new Set(productOptions.sizes.map((size) => size.id));
 const validWoods = new Set(productOptions.woods);
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export const POST: APIRoute = async ({ request }) => {
-  let input: OrderDraftInput;
+  let input: unknown;
 
   try {
-    input = (await request.json()) as OrderDraftInput;
+    input = await request.json();
   } catch {
     return Response.json({ error: "Invalid JSON." }, { status: 400 });
+  }
+
+  if (!isRecord(input)) {
+    return Response.json({ error: "Invalid order details." }, { status: 400 });
   }
 
   const customerName = clean(input.customerName);
@@ -38,6 +38,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (!customerName || !email || !petName || !validSizeIds.has(sizeId) || !validWoods.has(wood)) {
     return Response.json({ error: "Missing or invalid order details." }, { status: 400 });
+  }
+
+  if (!emailPattern.test(email)) {
+    return Response.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
   const selectedSize = productOptions.sizes.find((size) => size.id === sizeId);
