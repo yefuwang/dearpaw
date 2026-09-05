@@ -32,3 +32,9 @@ variable "r2_location" {
   type        = string
   default     = null
 }
+
+variable "admin_emails" {
+  description = "Email addresses allowed through Cloudflare Access for Dear Paw admin paths."
+  type        = list(string)
+  default     = ["yefuwang@gmail.com"]
+}

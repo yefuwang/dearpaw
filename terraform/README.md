@@ -10,6 +10,7 @@ This directory is intended to be the Spacelift-monitored infrastructure root.
 - Cloudflare R2 bucket for private uploads, proofs, generated assets, videos, and model files.
 - Cloudflare Queue for async jobs.
 - Cloudflare Turnstile widget for public forms.
+- Cloudflare Access applications for `/admin*` and `/api/admin*`.
 - AWS SES domain identity and transactional configuration set.
 - Cloudflare DNS records required for SES Easy DKIM, custom MAIL FROM, SPF, and starter DMARC.
 
@@ -31,11 +32,13 @@ domain_name              = "dearpaw.rip"
 mail_from_subdomain      = "mail"
 d1_primary_location_hint = "wnam"
 r2_location              = null
+admin_emails             = ["you@example.com"]
 ```
 
 ## Required Credentials
 
 - Cloudflare provider uses `CLOUDFLARE_API_TOKEN`.
+- Cloudflare Access resources require the token to include `Access: Apps and Policies Write`.
 - AWS provider uses the standard AWS provider credential chain configured in Spacelift.
 
 ## Notes

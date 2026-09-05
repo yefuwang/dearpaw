@@ -13,6 +13,14 @@ output "worker_custom_domain" {
   value       = cloudflare_workers_custom_domain.apex.hostname
 }
 
+output "admin_access_domains" {
+  description = "Cloudflare Access protected admin path patterns."
+  value = [
+    cloudflare_zero_trust_access_application.admin.domain,
+    cloudflare_zero_trust_access_application.admin_api.domain,
+  ]
+}
+
 output "d1_database_id" {
   description = "Cloudflare D1 database ID."
   value       = cloudflare_d1_database.app.id
