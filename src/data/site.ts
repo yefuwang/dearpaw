@@ -3,6 +3,7 @@ export const navItems = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/gallery", label: "Gallery" },
   { href: "/faq", label: "FAQ" },
+  { href: "/track", label: "Track" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -83,4 +84,3 @@ export const productOptions = {
   ],
   woods: woods.map((wood) => wood.name),
 };
-

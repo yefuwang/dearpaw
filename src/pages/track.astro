@@ -1,0 +1,22 @@
+---
+import { OrderTracker } from "../components/OrderTracker";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Track an Order | Dear Paw" description="Track a Dear Paw custom memorial order by reference and email.">
+  <section class="section">
+    <div class="container split">
+      <div>
+        <p class="eyebrow">Track</p>
+        <h1 class="display">Follow their memorial.</h1>
+        <p class="lede">Look up a draft or production order with the reference and email used to create it.</p>
+        <ul class="quiet-list">
+          <li>Uploaded photo filenames are shown after a draft is saved.</li>
+          <li>Proofs and production updates will appear here as later workflows are added.</li>
+          <li>Private image and video previews are not exposed until signed asset access is implemented.</li>
+        </ul>
+      </div>
+      <OrderTracker client:load />
+    </div>
+  </section>
+</BaseLayout>

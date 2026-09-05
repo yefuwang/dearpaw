@@ -181,7 +181,11 @@ export function OrderConfigurator() {
           {status === "submitting" ? "Saving..." : "Save draft"}
         </button>
         {status === "created" && (
-          <p className="form-status success">Draft saved. Reference: {orderId.slice(0, 8)}</p>
+          <div className="form-status success">
+            <span>Draft saved.</span>
+            <strong>Reference: {orderId}</strong>
+            <a href={`/track?orderId=${encodeURIComponent(orderId)}`}>Track this draft</a>
+          </div>
         )}
         {status === "error" && <p className="form-status error">Enter your name, email, pet name, size, and wood.</p>}
       </div>
