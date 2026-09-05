@@ -1,0 +1,12 @@
+---
+import { AdminDashboard } from "../components/AdminDashboard";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Admin | Dear Paw" description="Dear Paw internal order and contact dashboard.">
+  <section class="section admin-section">
+    <div class="container">
+      <AdminDashboard client:load />
+    </div>
+  </section>
+</BaseLayout>

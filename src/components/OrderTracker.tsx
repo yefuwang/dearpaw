@@ -31,6 +31,13 @@ type OrderStatus = {
     status: string;
     created_at: string;
   }>;
+  updates: Array<{
+    id: string;
+    stage: string;
+    note: string;
+    media_type: string | null;
+    created_at: string;
+  }>;
 };
 
 function formatMoney(cents: number) {
@@ -65,7 +72,7 @@ export function OrderTracker() {
       { key: "draft", label: "Draft", active: true },
       { key: "photos", label: "Photos", active: Boolean(result?.uploads.length) },
       { key: "proof", label: "Proof", active: Boolean(result?.proofs.length) },
-      { key: "production", label: "Production", active: result?.order.status === "production" },
+      { key: "production", label: "Production", active: result?.order.status === "production" || Boolean(result?.updates.length) },
       { key: "shipped", label: "Shipped", active: result?.order.status === "shipped" },
     ],
     [result],
@@ -162,6 +169,18 @@ export function OrderTracker() {
           </ol>
 
           <div className="status-lists">
+            <section>
+              <h3>Updates</h3>
+              {result.updates.length ? (
+                <ul className="plain-list">
+                  {result.updates.map((update) => (
+                    <li key={update.id}>{update.stage}: {update.note}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No production updates yet.</p>
+              )}
+            </section>
             <section>
               <h3>Photos</h3>
               {result.uploads.length ? (

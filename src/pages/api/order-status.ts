@@ -32,6 +32,14 @@ type ProofRow = {
   created_at: string;
 };
 
+type ProductionUpdateRow = {
+  id: string;
+  stage: string;
+  note: string;
+  media_type: string | null;
+  created_at: string;
+};
+
 type OrderStatusInput = {
   orderId?: string;
   email?: string;
@@ -83,7 +91,7 @@ export const POST: APIRoute = async ({ request }) => {
     return Response.json({ error: "No order found for that reference and email." }, { status: 404 });
   }
 
-  const [uploads, proofs] = await Promise.all([
+  const [uploads, proofs, updates] = await Promise.all([
     env.DB.prepare(
       `SELECT id, filename, asset_type, created_at
        FROM uploads
@@ -102,6 +110,15 @@ export const POST: APIRoute = async ({ request }) => {
     )
       .bind(order.id)
       .all<ProofRow>(),
+    env.DB.prepare(
+      `SELECT id, stage, note, media_type, created_at
+       FROM production_updates
+       WHERE order_id = ? AND visibility = 'customer'
+       ORDER BY created_at DESC
+       LIMIT 20`,
+    )
+      .bind(order.id)
+      .all<ProductionUpdateRow>(),
   ]);
 
   return Response.json({
@@ -125,5 +142,6 @@ export const POST: APIRoute = async ({ request }) => {
     },
     uploads: uploads.results,
     proofs: proofs.results,
+    updates: updates.results,
   });
 };
