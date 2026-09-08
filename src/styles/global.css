@@ -522,6 +522,18 @@ textarea {
   color: var(--muted);
 }
 
+.upload-panel .form-status {
+  color: var(--ink);
+}
+
+.upload-panel .form-status.success {
+  background: rgba(104, 114, 99, 0.16);
+}
+
+.upload-panel .form-status.error {
+  background: rgba(164, 93, 67, 0.16);
+}
+
 .summary-row {
   display: flex;
   justify-content: space-between;

@@ -15,6 +15,7 @@ export function OrderConfigurator() {
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState({ completed: 0, total: 0 });
 
   const selectedSize = useMemo(
     () => productOptions.sizes.find((size) => size.id === sizeId) ?? productOptions.sizes[1],
@@ -78,9 +79,10 @@ export function OrderConfigurator() {
 
     setUploadStatus("uploading");
     setUploadError("");
+    setUploadProgress({ completed: 0, total: photos.length });
     const names: string[] = [];
 
-    for (const photo of photos) {
+    for (const [index, photo] of photos.entries()) {
       const form = new FormData();
       form.set("photo", photo);
 
@@ -92,13 +94,17 @@ export function OrderConfigurator() {
           body: form,
         });
       } catch {
-        setUploadError("We could not reach the upload service. Please try again.");
+        setUploadedNames(names);
+        setPhotos(photos.slice(index));
+        setUploadError(`We could not upload ${photo.name} because the upload service could not be reached.`);
         setUploadStatus("error");
         return;
       }
 
       if (!response.ok) {
         const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        setUploadedNames(names);
+        setPhotos(photos.slice(index));
         setUploadError(result?.error ?? `We could not upload ${photo.name}. Please try again.`);
         setUploadStatus("error");
         return;
@@ -107,15 +113,19 @@ export function OrderConfigurator() {
       const result = (await response.json().catch(() => null)) as { filename?: string } | null;
 
       if (!result?.filename) {
+        setUploadedNames(names);
+        setPhotos(photos.slice(index));
         setUploadError("The upload service returned an unexpected response. Please try again.");
         setUploadStatus("error");
         return;
       }
 
       names.push(result.filename);
+      setUploadedNames([...names]);
+      setUploadProgress({ completed: index + 1, total: photos.length });
     }
 
-    setUploadedNames(names);
+    setPhotos([]);
     setUploadStatus("uploaded");
   }
 
@@ -249,6 +259,7 @@ export function OrderConfigurator() {
                 setPhotos(Array.from(event.target.files ?? []));
                 setUploadedNames([]);
                 setUploadError("");
+                setUploadProgress({ completed: 0, total: event.target.files?.length ?? 0 });
                 setUploadStatus("idle");
               }}
             />
@@ -264,7 +275,9 @@ export function OrderConfigurator() {
             </ul>
           )}
           <button className="button secondary" type="button" onClick={uploadPhotos} disabled={photos.length === 0 || uploadStatus === "uploading"}>
-            {uploadStatus === "uploading" ? "Uploading..." : `Upload ${photos.length || "selected"} photo${photos.length === 1 ? "" : "s"}`}
+            {uploadStatus === "uploading"
+              ? `Uploading ${uploadProgress.completed + 1} of ${uploadProgress.total}...`
+              : `Upload ${photos.length || "selected"} photo${photos.length === 1 ? "" : "s"}`}
           </button>
           {uploadStatus === "uploaded" && <p className="form-status success">Uploaded {uploadedNames.length} photo{uploadedNames.length === 1 ? "" : "s"}.</p>}
           {uploadStatus === "error" && <p className="form-status error">{uploadError}</p>}
