@@ -493,6 +493,35 @@ textarea {
   padding: 20px;
 }
 
+.upload-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upload-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.upload-list span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.upload-list small {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
 .summary-row {
   display: flex;
   justify-content: space-between;

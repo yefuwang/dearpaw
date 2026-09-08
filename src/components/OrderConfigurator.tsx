@@ -11,9 +11,10 @@ export function OrderConfigurator() {
   const [status, setStatus] = useState<"idle" | "submitting" | "created" | "error">("idle");
   const [orderId, setOrderId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
-  const [uploadName, setUploadName] = useState("");
+  const [uploadedNames, setUploadedNames] = useState<string[]>([]);
+  const [uploadError, setUploadError] = useState("");
 
   const selectedSize = useMemo(
     () => productOptions.sizes.find((size) => size.id === sizeId) ?? productOptions.sizes[1],
@@ -68,29 +69,53 @@ export function OrderConfigurator() {
     setStatus("created");
   }
 
-  async function uploadPhoto() {
-    if (!orderId || !photo) {
+  async function uploadPhotos() {
+    if (!orderId || photos.length === 0) {
+      setUploadError("Choose at least one photo to upload.");
       setUploadStatus("error");
       return;
     }
 
     setUploadStatus("uploading");
+    setUploadError("");
+    const names: string[] = [];
 
-    const form = new FormData();
-    form.set("photo", photo);
+    for (const photo of photos) {
+      const form = new FormData();
+      form.set("photo", photo);
 
-    const response = await fetch(`/api/order-drafts/${orderId}/uploads`, {
-      method: "POST",
-      body: form,
-    });
+      let response: Response;
 
-    if (!response.ok) {
-      setUploadStatus("error");
-      return;
+      try {
+        response = await fetch(`/api/order-drafts/${orderId}/uploads`, {
+          method: "POST",
+          body: form,
+        });
+      } catch {
+        setUploadError("We could not reach the upload service. Please try again.");
+        setUploadStatus("error");
+        return;
+      }
+
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        setUploadError(result?.error ?? `We could not upload ${photo.name}. Please try again.`);
+        setUploadStatus("error");
+        return;
+      }
+
+      const result = (await response.json().catch(() => null)) as { filename?: string } | null;
+
+      if (!result?.filename) {
+        setUploadError("The upload service returned an unexpected response. Please try again.");
+        setUploadStatus("error");
+        return;
+      }
+
+      names.push(result.filename);
     }
 
-    const result = (await response.json()) as { filename: string };
-    setUploadName(result.filename);
+    setUploadedNames(names);
     setUploadStatus("uploaded");
   }
 
@@ -215,21 +240,34 @@ export function OrderConfigurator() {
         <section className="upload-panel" aria-labelledby="photo-heading">
           <h3 id="photo-heading">Add a photo</h3>
           <label>
-            Pet photo
+            Pet photos
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              multiple
               onChange={(event) => {
-                setPhoto(event.target.files?.[0] ?? null);
+                setPhotos(Array.from(event.target.files ?? []));
+                setUploadedNames([]);
+                setUploadError("");
                 setUploadStatus("idle");
               }}
             />
           </label>
-          <button className="button secondary" type="button" onClick={uploadPhoto} disabled={!photo || uploadStatus === "uploading"}>
-            {uploadStatus === "uploading" ? "Uploading..." : "Upload photo"}
+          {photos.length > 0 && (
+            <ul className="upload-list">
+              {photos.map((photo) => (
+                <li key={`${photo.name}-${photo.size}-${photo.lastModified}`}>
+                  <span>{photo.name}</span>
+                  <small>{Math.ceil(photo.size / 1024)} KB</small>
+                </li>
+              ))}
+            </ul>
+          )}
+          <button className="button secondary" type="button" onClick={uploadPhotos} disabled={photos.length === 0 || uploadStatus === "uploading"}>
+            {uploadStatus === "uploading" ? "Uploading..." : `Upload ${photos.length || "selected"} photo${photos.length === 1 ? "" : "s"}`}
           </button>
-          {uploadStatus === "uploaded" && <p className="form-status success">Uploaded: {uploadName}</p>}
-          {uploadStatus === "error" && <p className="form-status error">Choose a JPEG, PNG, WEBP, HEIC, or HEIF under 10 MB.</p>}
+          {uploadStatus === "uploaded" && <p className="form-status success">Uploaded {uploadedNames.length} photo{uploadedNames.length === 1 ? "" : "s"}.</p>}
+          {uploadStatus === "error" && <p className="form-status error">{uploadError}</p>}
         </section>
       )}
     </form>
