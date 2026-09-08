@@ -503,6 +503,7 @@ textarea {
 
 .upload-list li {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 8px 10px;
@@ -510,6 +511,15 @@ textarea {
   border-radius: 4px;
   color: var(--ink);
   font-size: 13px;
+}
+
+.upload-list img {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--line);
 }
 
 .upload-list span {
@@ -520,6 +530,23 @@ textarea {
 .upload-list small {
   flex: 0 0 auto;
   color: var(--muted);
+}
+
+.upload-remove {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.upload-remove:hover,
+.upload-remove:focus-visible {
+  color: var(--ink);
 }
 
 .upload-panel .form-status {

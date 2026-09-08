@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useMemo, useState } from "react";
+import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { productOptions } from "../data/site";
 
 export function OrderConfigurator() {
@@ -16,6 +16,16 @@ export function OrderConfigurator() {
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState("");
   const [uploadProgress, setUploadProgress] = useState({ completed: 0, total: 0 });
+  const [photoPreviews, setPhotoPreviews] = useState<{ photo: File; url: string }[]>([]);
+
+  useEffect(() => {
+    const previews = photos.map((photo) => ({ photo, url: URL.createObjectURL(photo) }));
+    setPhotoPreviews(previews);
+
+    return () => {
+      previews.forEach(({ url }) => URL.revokeObjectURL(url));
+    };
+  }, [photos]);
 
   const selectedSize = useMemo(
     () => productOptions.sizes.find((size) => size.id === sizeId) ?? productOptions.sizes[1],
@@ -248,7 +258,7 @@ export function OrderConfigurator() {
 
       {status === "created" && (
         <section className="upload-panel" aria-labelledby="photo-heading">
-          <h3 id="photo-heading">Add a photo</h3>
+          <h3 id="photo-heading">Add pet photos</h3>
           <label>
             Pet photos
             <input
@@ -266,10 +276,23 @@ export function OrderConfigurator() {
           </label>
           {photos.length > 0 && (
             <ul className="upload-list">
-              {photos.map((photo) => (
+              {photoPreviews.map(({ photo, url }, index) => (
                 <li key={`${photo.name}-${photo.size}-${photo.lastModified}`}>
+                  <img src={url} alt="" />
                   <span>{photo.name}</span>
                   <small>{Math.ceil(photo.size / 1024)} KB</small>
+                  <button
+                    type="button"
+                    className="upload-remove"
+                    onClick={() => {
+                      setPhotos(photos.filter((_, photoIndex) => photoIndex !== index));
+                      setUploadStatus("idle");
+                      setUploadError("");
+                    }}
+                    aria-label={`Remove ${photo.name}`}
+                  >
+                    Remove
+                  </button>
                 </li>
               ))}
             </ul>
