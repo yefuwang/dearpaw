@@ -35,3 +35,17 @@ npm audit
 ## Infrastructure
 
 Spacelift watches the `terraform/` root. See `terraform/README.md` for required variables and provider credentials.
+
+## Transactional Email
+
+The Worker uses Amazon SES v2 for draft confirmations and contact notifications. Set these as Worker secrets after SES sending is ready:
+
+```sh
+npx wrangler secret put SES_ACCESS_KEY_ID
+npx wrangler secret put SES_SECRET_ACCESS_KEY
+npx wrangler secret put SES_FROM_EMAIL
+npx wrangler secret put SES_REGION
+npx wrangler secret put SES_ADMIN_EMAIL
+```
+
+The IAM credentials need permission for `ses:SendEmail` against the Dear Paw SES identity. Email delivery is best effort; missing or failing SES configuration does not fail customer requests.

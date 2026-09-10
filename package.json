@@ -13,6 +13,7 @@
   "dependencies": {
     "@astrojs/cloudflare": "^14.2.5",
     "@astrojs/react": "^6.0.4",
+    "@aws-sdk/client-sesv2": "^3.1129.0",
     "astro": "^7.2.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

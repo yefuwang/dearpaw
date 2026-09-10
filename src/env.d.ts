@@ -12,6 +12,11 @@ interface Env {
   ASSETS_BUCKET: R2Bucket;
   JOBS: Queue;
   TURNSTILE_SITEKEY: string;
+  SES_ACCESS_KEY_ID?: string;
+  SES_SECRET_ACCESS_KEY?: string;
+  SES_FROM_EMAIL?: string;
+  SES_REGION?: string;
+  SES_ADMIN_EMAIL?: string;
 }
 
 declare module "cloudflare:workers" {

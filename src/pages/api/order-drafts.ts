@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { productOptions } from "../../data/site";
+import { sendEmailBestEffort } from "../../lib/email";
 
 export const prerender = false;
 
@@ -113,6 +114,12 @@ export const POST: APIRoute = async ({ request }) => {
       trackingToken,
     ),
   ]);
+
+  await sendEmailBestEffort({
+    to: email,
+    subject: "Your Dear Paw memorial draft",
+    text: `We saved your memorial draft for ${petName}.\n\nYour order reference is ${orderId}. You can track it at https://dearpaw.rip/track?orderId=${orderId}\n\nYou can add photos from the order page when you are ready.`,
+  });
 
   return Response.json(
     {

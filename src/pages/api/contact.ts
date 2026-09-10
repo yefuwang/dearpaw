@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
+import { sendEmailBestEffort } from "../../lib/email";
 
 export const prerender = false;
 
@@ -26,6 +27,14 @@ export const POST: APIRoute = async ({ request }) => {
       request.headers.get("cf-connecting-ip"),
     )
     .run();
+
+  if (env.SES_ADMIN_EMAIL) {
+    await sendEmailBestEffort({
+      to: env.SES_ADMIN_EMAIL,
+      subject: `Dear Paw contact request from ${name}`,
+      text: `From: ${name} <${email.toLowerCase()}>\n\n${message}`,
+    });
+  }
 
   return new Response("Thanks. We received your message.", { status: 202 });
 };
