@@ -61,9 +61,19 @@ export const POST: APIRoute = async ({ params, request }) => {
   const orderStatus = action === "approve" ? "approved" : "proofing";
 
   await env.DB.batch([
-    env.DB.prepare("UPDATE proofs SET status = ?, customer_notes = ? WHERE id = ?").bind(proofStatus, notes || null, proofId),
-    env.DB.prepare("UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(orderStatus, proof.order_id),
+    env.DB.prepare("UPDATE proofs SET status = ?, customer_notes = ? WHERE id = ? AND status = 'proof_ready'").bind(proofStatus, notes || null, proofId),
+    env.DB.prepare(
+      `UPDATE orders
+       SET status = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND EXISTS (SELECT 1 FROM proofs WHERE id = ? AND status = ?)`,
+    ).bind(orderStatus, proof.order_id, proofId, proofStatus),
   ]);
+
+  const currentProof = await env.DB.prepare("SELECT status FROM proofs WHERE id = ?").bind(proofId).first<{ status: string }>();
+
+  if (currentProof?.status !== proofStatus) {
+    return Response.json({ error: "This proof has already been decided." }, { status: 409 });
+  }
 
   return Response.json({ proofId, status: proofStatus, orderStatus });
 };

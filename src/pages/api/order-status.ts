@@ -44,22 +44,25 @@ type ProductionUpdateRow = {
   created_at: string;
 };
 
-type OrderStatusInput = {
-  orderId?: string;
-  email?: string;
-};
-
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export const POST: APIRoute = async ({ request }) => {
-  let input: OrderStatusInput;
+  let input: unknown;
 
   try {
-    input = (await request.json()) as OrderStatusInput;
+    input = await request.json();
   } catch {
     return Response.json({ error: "Invalid JSON." }, { status: 400 });
+  }
+
+  if (!isRecord(input)) {
+    return Response.json({ error: "Invalid order details." }, { status: 400 });
   }
 
   const orderId = clean(input.orderId);

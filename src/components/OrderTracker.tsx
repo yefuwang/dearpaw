@@ -68,6 +68,7 @@ export function OrderTracker() {
   const [result, setResult] = useState<OrderStatus | null>(null);
   const [decisionNotes, setDecisionNotes] = useState("");
   const [decisionStatus, setDecisionStatus] = useState<"idle" | "submitting">("idle");
+  const [decisionError, setDecisionError] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -121,14 +122,24 @@ export function OrderTracker() {
     }
 
     setDecisionStatus("submitting");
-    const response = await fetch(`/api/order-proofs/${encodeURIComponent(proof.id)}/decision`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ token: result.proofAccessToken, action, notes: decisionNotes }),
-    });
+    setDecisionError("");
+    let response: Response;
+
+    try {
+      response = await fetch(`/api/order-proofs/${encodeURIComponent(proof.id)}/decision`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token: result.proofAccessToken, action, notes: decisionNotes }),
+      });
+    } catch {
+      setDecisionError("We could not reach the proof service. Please try again.");
+      setDecisionStatus("idle");
+      return;
+    }
 
     if (!response.ok) {
-      setMessage("We could not save your proof decision.");
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      setDecisionError(body?.error ?? "We could not save your proof decision.");
       setDecisionStatus("idle");
       return;
     }
@@ -267,6 +278,7 @@ export function OrderTracker() {
                       Request revision
                     </button>
                   </div>
+                  {decisionError && <p className="form-status error">{decisionError}</p>}
                 </div>
               )}
             </section>
