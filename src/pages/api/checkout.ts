@@ -27,7 +27,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const order = await env.DB.prepare(
     `SELECT orders.id, orders.status, orders.total_cents, orders.product_name, orders.size_name, orders.wood,
-            customers.email, pets.name AS pet_name, orders.stripe_checkout_session_id
+            customers.email, pets.name AS pet_name, orders.stripe_checkout_session_id, orders.stripe_checkout_attempt
      FROM orders INNER JOIN customers ON customers.id = orders.customer_id
      INNER JOIN pets ON pets.id = orders.pet_id
      WHERE orders.id = ? AND lower(customers.email) = ? AND orders.status IN ('draft', 'awaiting_payment')`,
@@ -38,6 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
   const stripeHeaders = {
     authorization: `Basic ${btoa(`${env.STRIPE_SECRET_KEY}:`)}`,
     "content-type": "application/x-www-form-urlencoded",
+    "idempotency-key": `checkout-${order.id}-${order.stripe_checkout_attempt}`,
   };
 
   if (order.stripe_checkout_session_id) {
