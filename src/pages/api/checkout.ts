@@ -27,13 +27,30 @@ export const POST: APIRoute = async ({ request }) => {
 
   const order = await env.DB.prepare(
     `SELECT orders.id, orders.status, orders.total_cents, orders.product_name, orders.size_name, orders.wood,
-            customers.email, pets.name AS pet_name
+            customers.email, pets.name AS pet_name, orders.stripe_checkout_session_id
      FROM orders INNER JOIN customers ON customers.id = orders.customer_id
      INNER JOIN pets ON pets.id = orders.pet_id
      WHERE orders.id = ? AND lower(customers.email) = ? AND orders.status IN ('draft', 'awaiting_payment')`,
   ).bind(orderId, email).first<{ id: string; status: string; total_cents: number; product_name: string; size_name: string | null; wood: string | null; email: string; pet_name: string }>();
 
   if (!order) return Response.json({ error: "No payable order found for that reference and email." }, { status: 404 });
+
+  const stripeHeaders = {
+    authorization: `Basic ${btoa(`${env.STRIPE_SECRET_KEY}:`)}`,
+    "content-type": "application/x-www-form-urlencoded",
+  };
+
+  if (order.stripe_checkout_session_id) {
+    try {
+      const existingResponse = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(order.stripe_checkout_session_id)}`, { headers: stripeHeaders });
+      const existing = (await existingResponse.json().catch(() => null)) as { status?: string; url?: string } | null;
+      if (existingResponse.ok && existing?.status === "open" && existing.url) {
+        return Response.json({ sessionId: order.stripe_checkout_session_id, url: existing.url, status: "awaiting_payment" });
+      }
+    } catch {
+      return Response.json({ error: "Checkout could not be reached. Please try again." }, { status: 502 });
+    }
+  }
 
   const params = new URLSearchParams();
   params.set("mode", "payment");
@@ -48,15 +65,16 @@ export const POST: APIRoute = async ({ request }) => {
   params.set("metadata[order_id]", order.id);
   params.set("payment_intent_data[metadata][order_id]", order.id);
 
-  const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
-    headers: { authorization: `Basic ${btoa(`${env.STRIPE_SECRET_KEY}:`)}`, "content-type": "application/x-www-form-urlencoded" },
-    body: params,
-  });
+  let stripeResponse: Response;
+  try {
+    stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: stripeHeaders, body: params });
+  } catch {
+    return Response.json({ error: "Checkout could not be reached. Please try again." }, { status: 502 });
+  }
   const session = (await stripeResponse.json().catch(() => null)) as { id?: string; url?: string; error?: { message?: string } } | null;
 
   if (!stripeResponse.ok || !session?.url) return Response.json({ error: session?.error?.message ?? "Checkout could not be started." }, { status: 502 });
 
-  await env.DB.prepare("UPDATE orders SET status = 'awaiting_payment', payment_status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(order.id).run();
+  await env.DB.prepare("UPDATE orders SET status = 'awaiting_payment', payment_status = 'pending', stripe_checkout_session_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(session.id, order.id).run();
   return Response.json({ sessionId: session.id, url: session.url, status: "awaiting_payment" });
 };

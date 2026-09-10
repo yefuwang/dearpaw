@@ -15,6 +15,7 @@ export function OrderConfigurator() {
   const [orderId, setOrderId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [checkoutStatus, setCheckoutStatus] = useState<"idle" | "starting">("idle");
+  const [checkoutError, setCheckoutError] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [uploadIds, setUploadIds] = useState<string[]>([]);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
@@ -42,7 +43,7 @@ export function OrderConfigurator() {
     event.preventDefault();
     setStatus("submitting");
     setOrderId("");
-    setErrorMessage("");
+    setCheckoutError("");
 
     let response: Response;
 
@@ -165,13 +166,13 @@ export function OrderConfigurator() {
         body: JSON.stringify({ orderId, email }),
       });
     } catch {
-      setErrorMessage("We could not reach checkout. Please try again.");
+      setCheckoutError("We could not reach checkout. Please try again.");
       setCheckoutStatus("idle");
       return;
     }
     const body = (await response.json().catch(() => null)) as { url?: string; error?: string } | null;
     if (!response.ok || !body?.url) {
-      setErrorMessage(body?.error ?? "Checkout could not be started.");
+      setCheckoutError(body?.error ?? "Checkout could not be started.");
       setCheckoutStatus("idle");
       return;
     }
@@ -330,6 +331,7 @@ export function OrderConfigurator() {
             </button>
           </div>
         )}
+        {checkoutError && <p className="form-status error">{checkoutError}</p>}
         {status === "error" && <p className="form-status error">{errorMessage}</p>}
       </div>
 
