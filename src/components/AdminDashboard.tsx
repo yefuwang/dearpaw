@@ -66,6 +66,8 @@ export function AdminDashboard() {
   const [stage, setStage] = useState("general");
   const [visibility, setVisibility] = useState("customer");
   const [note, setNote] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofStatus, setProofStatus] = useState<"idle" | "uploading">("idle");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -147,6 +149,29 @@ export function AdminDashboard() {
 
     setNote("");
     setMessage("Production update added.");
+    await loadDashboard(selectedStatus);
+  }
+
+  async function uploadProof() {
+    if (!selectedOrder || !proofFile) {
+      setMessage("Choose a proof file first.");
+      return;
+    }
+
+    setProofStatus("uploading");
+    const form = new FormData();
+    form.set("proof", proofFile);
+    const response = await fetch(`/api/admin/orders/${selectedOrder.id}/proofs`, { method: "POST", body: form });
+
+    if (!response.ok) {
+      setMessage("Proof upload failed.");
+      setProofStatus("idle");
+      return;
+    }
+
+    setProofFile(null);
+    setProofStatus("idle");
+    setMessage("Proof uploaded.");
     await loadDashboard(selectedStatus);
   }
 
@@ -274,6 +299,20 @@ export function AdminDashboard() {
                     </select>
                   </label>
                   <button className="button secondary" type="button" onClick={addUpdate}>Add update</button>
+                </div>
+
+                <div className="admin-actions">
+                  <label>
+                    Proof file
+                    <input
+                      type="file"
+                      accept="application/pdf,image/jpeg,image/png,image/webp"
+                      onChange={(event) => setProofFile(event.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                  <button className="button secondary" type="button" onClick={uploadProof} disabled={!proofFile || proofStatus === "uploading"}>
+                    {proofStatus === "uploading" ? "Uploading..." : "Upload proof"}
+                  </button>
                 </div>
               </div>
             ) : (
