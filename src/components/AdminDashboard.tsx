@@ -161,10 +161,19 @@ export function AdminDashboard() {
     setProofStatus("uploading");
     const form = new FormData();
     form.set("proof", proofFile);
-    const response = await fetch(`/api/admin/orders/${selectedOrder.id}/proofs`, { method: "POST", body: form });
+    let response: Response;
+
+    try {
+      response = await fetch(`/api/admin/orders/${selectedOrder.id}/proofs`, { method: "POST", body: form });
+    } catch {
+      setMessage("Proof upload could not reach the server.");
+      setProofStatus("idle");
+      return;
+    }
 
     if (!response.ok) {
-      setMessage("Proof upload failed.");
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      setMessage(body?.error ?? "Proof upload failed.");
       setProofStatus("idle");
       return;
     }
@@ -200,7 +209,7 @@ export function AdminDashboard() {
         </label>
       </section>
 
-      {message && <p className="form-status success">{message}</p>}
+      {message && <p className={`form-status ${message.toLowerCase().includes("failed") || message.toLowerCase().includes("could not") ? "error" : "success"}`}>{message}</p>}
       {loading && <p className="panel">Loading admin data...</p>}
 
       {data && !loading && (
@@ -307,6 +316,7 @@ export function AdminDashboard() {
                     <input
                       type="file"
                       accept="application/pdf,image/jpeg,image/png,image/webp"
+                      disabled={proofStatus === "uploading"}
                       onChange={(event) => setProofFile(event.target.files?.[0] ?? null)}
                     />
                   </label>
