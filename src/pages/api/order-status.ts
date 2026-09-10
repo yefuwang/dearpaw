@@ -19,6 +19,7 @@ type OrderStatusRow = {
   birth_text: string | null;
   passing_text: string | null;
   inscription: string | null;
+  tracking_token: string | null;
 };
 
 type UploadRow = {
@@ -84,7 +85,8 @@ export const POST: APIRoute = async ({ request }) => {
       pets.species,
       pets.birth_text,
       pets.passing_text,
-      orders.inscription
+      orders.inscription,
+      orders.tracking_token
     FROM orders
     INNER JOIN customers ON customers.id = orders.customer_id
     INNER JOIN pets ON pets.id = orders.pet_id
@@ -150,7 +152,11 @@ export const POST: APIRoute = async ({ request }) => {
       inscription: order.inscription,
     },
     uploads: uploads.results,
-    proofs: proofs.results,
+    proofs: proofs.results.map((proof: ProofRow) => ({
+      ...proof,
+      accessUrl: order.tracking_token ? `/api/order-proofs/${encodeURIComponent(proof.id)}?token=${encodeURIComponent(order.tracking_token)}` : null,
+    })),
     updates: updates.results,
+    proofAccessToken: order.tracking_token,
   });
 };

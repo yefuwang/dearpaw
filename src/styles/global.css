@@ -560,6 +560,18 @@ textarea {
   opacity: 0.5;
 }
 
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.proof-decision {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
 .upload-panel .form-status {
   color: var(--ink);
 }

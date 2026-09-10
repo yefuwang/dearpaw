@@ -33,6 +33,7 @@ type OrderStatus = {
     version: number;
     status: string;
     created_at: string;
+    accessUrl: string | null;
   }>;
   updates: Array<{
     id: string;
@@ -41,6 +42,7 @@ type OrderStatus = {
     media_type: string | null;
     created_at: string;
   }>;
+  proofAccessToken: string | null;
 };
 
 function formatMoney(cents: number) {
@@ -64,6 +66,8 @@ export function OrderTracker() {
   const [status, setStatus] = useState<"idle" | "loading" | "loaded" | "error">("idle");
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<OrderStatus | null>(null);
+  const [decisionNotes, setDecisionNotes] = useState("");
+  const [decisionStatus, setDecisionStatus] = useState<"idle" | "submitting">("idle");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -107,6 +111,31 @@ export function OrderTracker() {
 
     setResult((await response.json()) as OrderStatus);
     setStatus("loaded");
+  }
+
+  async function decideProof(action: "approve" | "request_revision") {
+    const proof = result?.proofs[0];
+
+    if (!proof || !result?.proofAccessToken) {
+      return;
+    }
+
+    setDecisionStatus("submitting");
+    const response = await fetch(`/api/order-proofs/${encodeURIComponent(proof.id)}/decision`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token: result.proofAccessToken, action, notes: decisionNotes }),
+    });
+
+    if (!response.ok) {
+      setMessage("We could not save your proof decision.");
+      setDecisionStatus("idle");
+      return;
+    }
+
+    setDecisionNotes("");
+    setDecisionStatus("idle");
+    await loadStatus({ preventDefault: () => undefined });
   }
 
   return (
@@ -215,11 +244,30 @@ export function OrderTracker() {
               {result.proofs.length ? (
                 <ul className="plain-list">
                   {result.proofs.map((proof) => (
-                    <li key={proof.id}>Version {proof.version}: {proof.status}</li>
+                    <li key={proof.id}>
+                      <span>Version {proof.version}: {proof.status}</span>
+                      {proof.accessUrl && <a href={proof.accessUrl} target="_blank" rel="noreferrer">Open proof</a>}
+                    </li>
                   ))}
                 </ul>
               ) : (
                 <p>No proof has been prepared yet.</p>
+              )}
+              {result.proofs[0]?.status === "proof_ready" && result.proofAccessToken && (
+                <div className="proof-decision">
+                  <label>
+                    Notes <span className="optional">Optional for approval</span>
+                    <textarea value={decisionNotes} onChange={(event) => setDecisionNotes(event.target.value)} maxLength={1200} />
+                  </label>
+                  <div className="button-row">
+                    <button className="button" type="button" onClick={() => void decideProof("approve")} disabled={decisionStatus === "submitting"}>
+                      Approve proof
+                    </button>
+                    <button className="button secondary" type="button" onClick={() => void decideProof("request_revision")} disabled={decisionStatus === "submitting" || !decisionNotes.trim()}>
+                      Request revision
+                    </button>
+                  </div>
+                </div>
               )}
             </section>
           </div>
