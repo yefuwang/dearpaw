@@ -17,6 +17,8 @@ interface Env {
   SES_FROM_EMAIL?: string;
   SES_REGION?: string;
   SES_ADMIN_EMAIL?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
 }
 
 declare module "cloudflare:workers" {

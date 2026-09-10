@@ -49,3 +49,14 @@ npx wrangler secret put SES_ADMIN_EMAIL
 ```
 
 The IAM credentials need permission for `ses:SendEmail` against the Dear Paw SES identity. Email delivery is best effort; missing or failing SES configuration does not fail customer requests.
+
+## Stripe Checkout
+
+Checkout uses Stripe-hosted Checkout Sessions. Set the secret key and webhook signing secret as Worker secrets:
+
+```sh
+npx wrangler secret put STRIPE_SECRET_KEY
+npx wrangler secret put STRIPE_WEBHOOK_SECRET
+```
+
+Configure the Stripe webhook endpoint as `https://dearpaw.rip/api/stripe/webhook` and subscribe to `checkout.session.completed` and `checkout.session.expired`.

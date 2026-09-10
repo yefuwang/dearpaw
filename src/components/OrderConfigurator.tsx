@@ -14,6 +14,7 @@ export function OrderConfigurator() {
   const [status, setStatus] = useState<"idle" | "submitting" | "created" | "error">("idle");
   const [orderId, setOrderId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [checkoutStatus, setCheckoutStatus] = useState<"idle" | "starting">("idle");
   const [photos, setPhotos] = useState<File[]>([]);
   const [uploadIds, setUploadIds] = useState<string[]>([]);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
@@ -150,6 +151,31 @@ export function OrderConfigurator() {
     setPhotos([]);
     setUploadIds([]);
     setUploadStatus("uploaded");
+  }
+
+  async function startCheckout() {
+    if (!orderId || !email) return;
+    setCheckoutStatus("starting");
+    setErrorMessage("");
+    let response: Response;
+    try {
+      response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ orderId, email }),
+      });
+    } catch {
+      setErrorMessage("We could not reach checkout. Please try again.");
+      setCheckoutStatus("idle");
+      return;
+    }
+    const body = (await response.json().catch(() => null)) as { url?: string; error?: string } | null;
+    if (!response.ok || !body?.url) {
+      setErrorMessage(body?.error ?? "Checkout could not be started.");
+      setCheckoutStatus("idle");
+      return;
+    }
+    window.location.assign(body.url);
   }
 
   return (
@@ -299,6 +325,9 @@ export function OrderConfigurator() {
             <span>Draft saved.</span>
             <strong>Reference: {orderId}</strong>
             <a href={`/track?orderId=${encodeURIComponent(orderId)}`}>Track this draft</a>
+            <button className="button secondary" type="button" onClick={() => void startCheckout()} disabled={checkoutStatus === "starting"}>
+              {checkoutStatus === "starting" ? "Opening checkout..." : "Continue to payment"}
+            </button>
           </div>
         )}
         {status === "error" && <p className="form-status error">{errorMessage}</p>}
