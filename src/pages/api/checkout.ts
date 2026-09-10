@@ -76,6 +76,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (!stripeResponse.ok || !session?.url) return Response.json({ error: session?.error?.message ?? "Checkout could not be started." }, { status: 502 });
 
-  await env.DB.prepare("UPDATE orders SET status = 'awaiting_payment', payment_status = 'pending', stripe_checkout_session_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(session.id, order.id).run();
+  try {
+    await env.DB.prepare("UPDATE orders SET status = 'awaiting_payment', payment_status = 'pending', stripe_checkout_session_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(session.id, order.id).run();
+  } catch {
+    return Response.json({ error: "Checkout was created but could not be saved. Please try again." }, { status: 502 });
+  }
   return Response.json({ sessionId: session.id, url: session.url, status: "awaiting_payment" });
 };
