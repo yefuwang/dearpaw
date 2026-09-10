@@ -7,6 +7,7 @@ export const prerender = false;
 const validSizeIds = new Set(productOptions.sizes.map((size) => size.id));
 const validWoods = new Set(productOptions.woods);
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const yearPattern = /^\d{4}$/;
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -33,10 +34,22 @@ export const POST: APIRoute = async ({ request }) => {
   const email = clean(input.email).toLowerCase();
   const petName = clean(input.petName);
   const species = clean(input.species);
+  const birthYear = clean(input.birthYear);
+  const passingYear = clean(input.passingYear);
+  const inscription = clean(input.inscription);
   const sizeId = clean(input.sizeId);
   const wood = clean(input.wood);
 
-  if (!customerName || !email || !petName || !validSizeIds.has(sizeId) || !validWoods.has(wood)) {
+  if (
+    !customerName ||
+    !email ||
+    !petName ||
+    !validSizeIds.has(sizeId) ||
+    !validWoods.has(wood) ||
+    (birthYear && !yearPattern.test(birthYear)) ||
+    (passingYear && !yearPattern.test(passingYear)) ||
+    inscription.length > 160
+  ) {
     return Response.json({ error: "Missing or invalid order details." }, { status: 400 });
   }
 
@@ -57,11 +70,13 @@ export const POST: APIRoute = async ({ request }) => {
 
   await env.DB.batch([
     env.DB.prepare("INSERT INTO customers (id, name, email) VALUES (?, ?, ?)").bind(customerId, customerName, email),
-    env.DB.prepare("INSERT INTO pets (id, customer_id, name, species) VALUES (?, ?, ?, ?)").bind(
+    env.DB.prepare("INSERT INTO pets (id, customer_id, name, species, birth_text, passing_text) VALUES (?, ?, ?, ?, ?, ?)").bind(
       petId,
       customerId,
       petName,
       species || null,
+      birthYear || null,
+      passingYear || null,
     ),
     env.DB.prepare(
       `INSERT INTO orders (
@@ -74,8 +89,9 @@ export const POST: APIRoute = async ({ request }) => {
         size_name,
         wood,
         subtotal_cents,
-        total_cents
-      ) VALUES (?, ?, ?, 'draft', 'not_started', ?, ?, ?, ?, ?)`,
+        total_cents,
+        inscription
+      ) VALUES (?, ?, ?, 'draft', 'not_started', ?, ?, ?, ?, ?, ?)`,
     ).bind(
       orderId,
       customerId,
@@ -85,6 +101,7 @@ export const POST: APIRoute = async ({ request }) => {
       wood,
       totalCents,
       totalCents,
+      inscription || null,
     ),
   ]);
 

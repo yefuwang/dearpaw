@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
+import { type SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { productOptions } from "../data/site";
 
 export function OrderConfigurator() {
@@ -8,6 +8,9 @@ export function OrderConfigurator() {
   const [email, setEmail] = useState("");
   const [petName, setPetName] = useState("");
   const [species, setSpecies] = useState("");
+  const [birthYear, setBirthYear] = useState("");
+  const [passingYear, setPassingYear] = useState("");
+  const [inscription, setInscription] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "created" | "error">("idle");
   const [orderId, setOrderId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -16,6 +19,7 @@ export function OrderConfigurator() {
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState("");
   const [uploadProgress, setUploadProgress] = useState({ completed: 0, total: 0 });
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [photoPreviews, setPhotoPreviews] = useState<{ photo: File; url: string }[]>([]);
 
   useEffect(() => {
@@ -51,6 +55,9 @@ export function OrderConfigurator() {
           email,
           petName,
           species,
+          birthYear,
+          passingYear,
+          inscription,
           sizeId,
           wood,
         }),
@@ -90,7 +97,7 @@ export function OrderConfigurator() {
     setUploadStatus("uploading");
     setUploadError("");
     setUploadProgress({ completed: 0, total: photos.length });
-    const names: string[] = [];
+    const names = [...uploadedNames];
 
     for (const [index, photo] of photos.entries()) {
       const form = new FormData();
@@ -224,6 +231,41 @@ export function OrderConfigurator() {
         </select>
       </label>
 
+      <div className="field-pair">
+        <label>
+          Birth year <span className="optional">Optional</span>
+          <input
+            value={birthYear}
+            onChange={(event) => setBirthYear(event.target.value)}
+            inputMode="numeric"
+            pattern="[0-9]{4}"
+            maxLength={4}
+            placeholder="2012"
+          />
+        </label>
+        <label>
+          Passing year <span className="optional">Optional</span>
+          <input
+            value={passingYear}
+            onChange={(event) => setPassingYear(event.target.value)}
+            inputMode="numeric"
+            pattern="[0-9]{4}"
+            maxLength={4}
+            placeholder="2026"
+          />
+        </label>
+      </div>
+
+      <label>
+        Short inscription <span className="optional">Optional</span>
+        <input
+          value={inscription}
+          onChange={(event) => setInscription(event.target.value)}
+          maxLength={160}
+          placeholder="Always in our hearts"
+        />
+      </label>
+
       <div className="summary-box" aria-live="polite">
         <div className="summary-row">
           <span>Memorial</span>
@@ -263,6 +305,7 @@ export function OrderConfigurator() {
             Pet photos
             <input
               type="file"
+              ref={photoInputRef}
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
               multiple
               onChange={(event) => {
@@ -285,11 +328,18 @@ export function OrderConfigurator() {
                     type="button"
                     className="upload-remove"
                     onClick={() => {
+                      if (uploadStatus === "uploading") {
+                        return;
+                      }
                       setPhotos(photos.filter((_, photoIndex) => photoIndex !== index));
                       setUploadStatus("idle");
                       setUploadError("");
+                      if (photos.length === 1 && photoInputRef.current) {
+                        photoInputRef.current.value = "";
+                      }
                     }}
                     aria-label={`Remove ${photo.name}`}
+                    disabled={uploadStatus === "uploading"}
                   >
                     Remove
                   </button>

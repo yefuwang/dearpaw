@@ -417,6 +417,12 @@ textarea {
   gap: 12px;
 }
 
+.optional {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
 .site-footer {
   border-top: 1px solid var(--line);
   padding: 42px 0;
@@ -547,6 +553,11 @@ textarea {
 .upload-remove:hover,
 .upload-remove:focus-visible {
   color: var(--ink);
+}
+
+.upload-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .upload-panel .form-status {
