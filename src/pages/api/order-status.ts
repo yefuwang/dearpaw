@@ -16,6 +16,9 @@ type OrderStatusRow = {
   customer_name: string;
   pet_name: string;
   species: string | null;
+  birth_text: string | null;
+  passing_text: string | null;
+  inscription: string | null;
 };
 
 type UploadRow = {
@@ -78,7 +81,10 @@ export const POST: APIRoute = async ({ request }) => {
       orders.updated_at,
       customers.name AS customer_name,
       pets.name AS pet_name,
-      pets.species
+      pets.species,
+      pets.birth_text,
+      pets.passing_text,
+      orders.inscription
     FROM orders
     INNER JOIN customers ON customers.id = orders.customer_id
     INNER JOIN pets ON pets.id = orders.pet_id
@@ -139,6 +145,9 @@ export const POST: APIRoute = async ({ request }) => {
     pet: {
       name: order.pet_name,
       species: order.species,
+      birthYear: order.birth_text,
+      passingYear: order.passing_text,
+      inscription: order.inscription,
     },
     uploads: uploads.results,
     proofs: proofs.results,

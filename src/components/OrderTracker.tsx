@@ -18,6 +18,9 @@ type OrderStatus = {
   pet: {
     name: string;
     species: string | null;
+    birthYear: string | null;
+    passingYear: string | null;
+    inscription: string | null;
   };
   uploads: Array<{
     id: string;
@@ -154,6 +157,20 @@ export function OrderTracker() {
               <span>Total</span>
               <strong>{formatMoney(result.order.totalCents)}</strong>
             </div>
+            <div>
+              <span>Years</span>
+              <strong>
+                {result.pet.birthYear || result.pet.passingYear
+                  ? `${result.pet.birthYear ?? ""} - ${result.pet.passingYear ?? ""}`
+                  : "Not set"}
+              </strong>
+            </div>
+            {result.pet.inscription && (
+              <div>
+                <span>Inscription</span>
+                <strong>{result.pet.inscription}</strong>
+              </div>
+            )}
             <div>
               <span>Created</span>
               <strong>{formatDate(result.order.createdAt)}</strong>
