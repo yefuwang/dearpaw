@@ -326,9 +326,10 @@ export function OrderConfigurator() {
             <span>Draft saved.</span>
             <strong>Reference: {orderId}</strong>
             <a href={`/track?orderId=${encodeURIComponent(orderId)}`}>Track this draft</a>
-            <button className="button secondary" type="button" onClick={() => void startCheckout()} disabled={checkoutStatus === "starting"}>
+            <button className="button secondary" type="button" onClick={() => void startCheckout()} disabled={checkoutStatus === "starting" || uploadedNames.length < 3}>
               {checkoutStatus === "starting" ? "Opening checkout..." : "Continue to payment"}
             </button>
+            {uploadedNames.length < 3 && <small>Upload at least 3 photos before payment.</small>}
           </div>
         )}
         {checkoutError && <p className="form-status error">{checkoutError}</p>}

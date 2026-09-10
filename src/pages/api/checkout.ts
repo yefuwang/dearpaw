@@ -30,10 +30,11 @@ export const POST: APIRoute = async ({ request }) => {
             customers.email, pets.name AS pet_name, orders.stripe_checkout_session_id, orders.stripe_checkout_attempt
      FROM orders INNER JOIN customers ON customers.id = orders.customer_id
      INNER JOIN pets ON pets.id = orders.pet_id
-     WHERE orders.id = ? AND lower(customers.email) = ? AND orders.status IN ('draft', 'awaiting_payment')`,
+     WHERE orders.id = ? AND lower(customers.email) = ? AND orders.status IN ('draft', 'awaiting_payment')
+       AND (SELECT COUNT(*) FROM uploads WHERE uploads.order_id = orders.id) >= 3`,
   ).bind(orderId, email).first<{ id: string; status: string; total_cents: number; product_name: string; size_name: string | null; wood: string | null; email: string; pet_name: string }>();
 
-  if (!order) return Response.json({ error: "No payable order found for that reference and email." }, { status: 404 });
+  if (!order) return Response.json({ error: "Upload at least 3 pet photos before continuing to payment." }, { status: 409 });
 
   const stripeHeaders = {
     authorization: `Basic ${btoa(`${env.STRIPE_SECRET_KEY}:`)}`,
