@@ -161,11 +161,15 @@ export const POST: APIRoute = async ({ request }) => {
       accessUrl: order.tracking_token ? `/api/order-proofs/${encodeURIComponent(proof.id)}?token=${encodeURIComponent(order.tracking_token)}` : null,
     })),
     updates: updates.results.map((update: ProductionUpdateRow) => ({
-      ...update,
+      id: update.id,
+      stage: update.stage,
+      note: update.note,
+      media_type: update.media_type,
+      created_at: update.created_at,
       mediaUrl: order.tracking_token && update.media_storage_key
         ? `/api/order-media/${encodeURIComponent(update.id)}?token=${encodeURIComponent(order.tracking_token)}`
         : null,
     })),
     proofAccessToken: order.tracking_token,
-  });
+  }, { headers: { "cache-control": "no-store" } });
 };

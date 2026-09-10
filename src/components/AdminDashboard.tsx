@@ -69,8 +69,10 @@ export function AdminDashboard() {
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofStatus, setProofStatus] = useState<"idle" | "uploading">("idle");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaUploadId, setMediaUploadId] = useState("");
   const [mediaStatus, setMediaStatus] = useState<"idle" | "uploading">("idle");
   const [message, setMessage] = useState("");
+  const [messageKind, setMessageKind] = useState<"success" | "error">("success");
   const [loading, setLoading] = useState(true);
 
   const selectedOrder = useMemo(
@@ -86,6 +88,7 @@ export function AdminDashboard() {
     const response = await fetch(url);
 
     if (!response.ok) {
+      setMessageKind("error");
       setMessage("Unable to load admin data.");
       setLoading(false);
       return;
@@ -122,16 +125,19 @@ export function AdminDashboard() {
     });
 
     if (!response.ok) {
+      setMessageKind("error");
       setMessage("Status update failed.");
       return;
     }
 
+    setMessageKind("success");
     setMessage("Status updated.");
     await loadDashboard(selectedStatus);
   }
 
   async function addUpdate() {
     if (!selectedOrder || !note.trim()) {
+      setMessageKind("error");
       setMessage("Choose an order and enter a production note.");
       return;
     }
@@ -145,17 +151,20 @@ export function AdminDashboard() {
     });
 
     if (!response.ok) {
+      setMessageKind("error");
       setMessage("Production update failed.");
       return;
     }
 
     setNote("");
+    setMessageKind("success");
     setMessage("Production update added.");
     await loadDashboard(selectedStatus);
   }
 
   async function uploadProof() {
     if (!selectedOrder || !proofFile) {
+      setMessageKind("error");
       setMessage("Choose a proof file first.");
       return;
     }
@@ -168,12 +177,14 @@ export function AdminDashboard() {
     try {
       response = await fetch(`/api/admin/orders/${selectedOrder.id}/proofs`, { method: "POST", body: form });
     } catch {
+      setMessageKind("error");
       setMessage("Proof upload could not reach the server.");
       setProofStatus("idle");
       return;
     }
 
     if (!response.ok) {
+      setMessageKind("error");
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
       setMessage(body?.error ?? "Proof upload failed.");
       setProofStatus("idle");
@@ -182,12 +193,14 @@ export function AdminDashboard() {
 
     setProofFile(null);
     setProofStatus("idle");
+    setMessageKind("success");
     setMessage("Proof uploaded.");
     await loadDashboard(selectedStatus);
   }
 
   async function uploadProductionMedia() {
     if (!selectedOrder || !mediaFile || !stage || !note.trim()) {
+      setMessageKind("error");
       setMessage("Choose media and enter a production note first.");
       return;
     }
@@ -195,6 +208,7 @@ export function AdminDashboard() {
     setMediaStatus("uploading");
     const form = new FormData();
     form.set("media", mediaFile);
+    form.set("uploadId", mediaUploadId);
     form.set("stage", stage);
     form.set("note", note);
     form.set("visibility", visibility);
@@ -203,6 +217,7 @@ export function AdminDashboard() {
     try {
       response = await fetch(`/api/admin/orders/${selectedOrder.id}/production-media`, { method: "POST", body: form });
     } catch {
+      setMessageKind("error");
       setMessage("Production media upload could not reach the server.");
       setMediaStatus("idle");
       return;
@@ -210,14 +225,17 @@ export function AdminDashboard() {
 
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      setMessageKind("error");
       setMessage(body?.error ?? "Production media upload failed.");
       setMediaStatus("idle");
       return;
     }
 
     setMediaFile(null);
+    setMediaUploadId("");
     setNote("");
     setMediaStatus("idle");
+    setMessageKind("success");
     setMessage("Production media added.");
     await loadDashboard(selectedStatus);
   }
@@ -247,7 +265,7 @@ export function AdminDashboard() {
         </label>
       </section>
 
-      {message && <p className={`form-status ${message.toLowerCase().includes("failed") || message.toLowerCase().includes("could not") ? "error" : "success"}`}>{message}</p>}
+      {message && <p className={`form-status ${messageKind}`}>{message}</p>}
       {loading && <p className="panel">Loading admin data...</p>}
 
       {data && !loading && (
@@ -262,6 +280,7 @@ export function AdminDashboard() {
                   type="button"
                   aria-pressed={order.id === selectedOrder?.id}
                   onClick={() => setSelectedOrderId(order.id)}
+                  disabled={mediaStatus === "uploading"}
                 >
                   <span>
                     <strong>{order.pet_name}</strong>
@@ -316,7 +335,7 @@ export function AdminDashboard() {
                 <div className="admin-actions">
                   <label>
                     Order status
-                    <select value={nextStatus} onChange={(event) => setNextStatus(event.target.value)}>
+                    <select value={nextStatus} onChange={(event) => setNextStatus(event.target.value)} disabled={mediaStatus === "uploading"}>
                       {data.statuses.map((status) => (
                         <option key={status} value={status}>{status}</option>
                       ))}
@@ -328,7 +347,7 @@ export function AdminDashboard() {
                 <div className="admin-actions">
                   <label>
                     Stage
-                    <select value={stage} onChange={(event) => setStage(event.target.value)}>
+                    <select value={stage} onChange={(event) => setStage(event.target.value)} disabled={mediaStatus === "uploading"}>
                       {productionStages.map((value) => (
                         <option key={value} value={value}>{value}</option>
                       ))}
@@ -336,11 +355,11 @@ export function AdminDashboard() {
                   </label>
                   <label>
                     Production note
-                    <textarea value={note} onChange={(event) => setNote(event.target.value)} />
+                    <textarea value={note} onChange={(event) => setNote(event.target.value)} disabled={mediaStatus === "uploading"} />
                   </label>
                   <label>
                     Visibility
-                    <select value={visibility} onChange={(event) => setVisibility(event.target.value)}>
+                    <select value={visibility} onChange={(event) => setVisibility(event.target.value)} disabled={mediaStatus === "uploading"}>
                       <option value="customer">Customer</option>
                       <option value="internal">Internal</option>
                     </select>
@@ -355,7 +374,11 @@ export function AdminDashboard() {
                       type="file"
                       accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
                       disabled={mediaStatus === "uploading"}
-                      onChange={(event) => setMediaFile(event.target.files?.[0] ?? null)}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] ?? null;
+                        setMediaFile(file);
+                        setMediaUploadId(file ? crypto.randomUUID() : "");
+                      }}
                     />
                   </label>
                   <button className="button secondary" type="button" onClick={uploadProductionMedia} disabled={!mediaFile || !note.trim() || mediaStatus === "uploading"}>
