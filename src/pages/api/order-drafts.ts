@@ -72,6 +72,7 @@ export const POST: APIRoute = async ({ request }) => {
   const customerId = crypto.randomUUID();
   const petId = crypto.randomUUID();
   const orderId = crypto.randomUUID();
+  const trackingToken = crypto.randomUUID();
   const totalCents = selectedSize.price * 100;
 
   await env.DB.batch([
@@ -96,8 +97,9 @@ export const POST: APIRoute = async ({ request }) => {
         wood,
         subtotal_cents,
         total_cents,
-        inscription
-      ) VALUES (?, ?, ?, 'draft', 'not_started', ?, ?, ?, ?, ?, ?)`,
+        inscription,
+        tracking_token
+      ) VALUES (?, ?, ?, 'draft', 'not_started', ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       orderId,
       customerId,
@@ -108,6 +110,7 @@ export const POST: APIRoute = async ({ request }) => {
       totalCents,
       totalCents,
       inscription || null,
+      trackingToken,
     ),
   ]);
 
