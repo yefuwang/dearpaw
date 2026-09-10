@@ -6,6 +6,7 @@ export const prerender = false;
 const maxUploadBytes = 10 * 1024 * 1024;
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const contentLengthSlackBytes = 1024 * 1024;
+const uploadIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function cleanFilename(filename: string) {
   return filename.replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-").slice(0, 120) || "pet-photo";
@@ -72,9 +73,25 @@ export const POST: APIRoute = async ({ params, request }) => {
   }
 
   const photo = form.get("photo");
+  const requestedUploadId = form.get("uploadId");
 
   if (!(photo instanceof File)) {
     return Response.json({ error: "Missing photo file." }, { status: 400 });
+  }
+
+  if (typeof requestedUploadId !== "string" || !uploadIdPattern.test(requestedUploadId)) {
+    return Response.json({ error: "Missing or invalid upload id." }, { status: 400 });
+  }
+
+  const existingUpload = await env.DB.prepare("SELECT id, filename FROM uploads WHERE id = ? AND order_id = ?")
+    .bind(requestedUploadId, orderId)
+    .first<{ id: string; filename: string }>();
+
+  if (existingUpload) {
+    return Response.json(
+      { uploadId: existingUpload.id, filename: existingUpload.filename, status: "uploaded" },
+      { status: 200 },
+    );
   }
 
   if (photo.size <= 0 || photo.size > maxUploadBytes) {
@@ -89,7 +106,7 @@ export const POST: APIRoute = async ({ params, request }) => {
     return Response.json({ error: "Photo content does not match the declared image type." }, { status: 400 });
   }
 
-  const uploadId = crypto.randomUUID();
+  const uploadId = requestedUploadId;
   const filename = cleanFilename(photo.name);
   const storageKey = `orders/${orderId}/uploads/${uploadId}-${filename}`;
 

@@ -30,6 +30,12 @@ export const POST: APIRoute = async ({ request }) => {
     return Response.json({ error: "Invalid order details." }, { status: 400 });
   }
 
+  const optionalFields = ["birthYear", "passingYear", "inscription"];
+
+  if (optionalFields.some((field) => input[field] !== undefined && typeof input[field] !== "string")) {
+    return Response.json({ error: "Invalid personalization details." }, { status: 400 });
+  }
+
   const customerName = clean(input.customerName);
   const email = clean(input.email).toLowerCase();
   const petName = clean(input.petName);

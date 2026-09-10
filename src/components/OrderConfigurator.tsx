@@ -15,6 +15,7 @@ export function OrderConfigurator() {
   const [orderId, setOrderId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
+  const [uploadIds, setUploadIds] = useState<string[]>([]);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState("");
@@ -102,6 +103,7 @@ export function OrderConfigurator() {
     for (const [index, photo] of photos.entries()) {
       const form = new FormData();
       form.set("photo", photo);
+      form.set("uploadId", uploadIds[index]);
 
       let response: Response;
 
@@ -113,6 +115,7 @@ export function OrderConfigurator() {
       } catch {
         setUploadedNames(names);
         setPhotos(photos.slice(index));
+        setUploadIds(uploadIds.slice(index));
         setUploadError(`We could not upload ${photo.name} because the upload service could not be reached.`);
         setUploadStatus("error");
         return;
@@ -122,6 +125,7 @@ export function OrderConfigurator() {
         const result = (await response.json().catch(() => null)) as { error?: string } | null;
         setUploadedNames(names);
         setPhotos(photos.slice(index));
+        setUploadIds(uploadIds.slice(index));
         setUploadError(result?.error ?? `We could not upload ${photo.name}. Please try again.`);
         setUploadStatus("error");
         return;
@@ -132,6 +136,7 @@ export function OrderConfigurator() {
       if (!result?.filename) {
         setUploadedNames(names);
         setPhotos(photos.slice(index));
+        setUploadIds(uploadIds.slice(index));
         setUploadError("The upload service returned an unexpected response. Please try again.");
         setUploadStatus("error");
         return;
@@ -143,6 +148,7 @@ export function OrderConfigurator() {
     }
 
     setPhotos([]);
+    setUploadIds([]);
     setUploadStatus("uploaded");
   }
 
@@ -308,8 +314,11 @@ export function OrderConfigurator() {
               ref={photoInputRef}
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
               multiple
+              disabled={uploadStatus === "uploading"}
               onChange={(event) => {
-                setPhotos(Array.from(event.target.files ?? []));
+                const selectedPhotos = Array.from(event.target.files ?? []);
+                setPhotos(selectedPhotos);
+                setUploadIds(selectedPhotos.map(() => crypto.randomUUID()));
                 setUploadedNames([]);
                 setUploadError("");
                 setUploadProgress({ completed: 0, total: event.target.files?.length ?? 0 });
@@ -332,6 +341,7 @@ export function OrderConfigurator() {
                         return;
                       }
                       setPhotos(photos.filter((_, photoIndex) => photoIndex !== index));
+                      setUploadIds(uploadIds.filter((_, photoIndex) => photoIndex !== index));
                       setUploadStatus("idle");
                       setUploadError("");
                       if (photos.length === 1 && photoInputRef.current) {
