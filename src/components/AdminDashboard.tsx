@@ -68,6 +68,8 @@ export function AdminDashboard() {
   const [note, setNote] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofStatus, setProofStatus] = useState<"idle" | "uploading">("idle");
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaStatus, setMediaStatus] = useState<"idle" | "uploading">("idle");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -181,6 +183,42 @@ export function AdminDashboard() {
     setProofFile(null);
     setProofStatus("idle");
     setMessage("Proof uploaded.");
+    await loadDashboard(selectedStatus);
+  }
+
+  async function uploadProductionMedia() {
+    if (!selectedOrder || !mediaFile || !stage || !note.trim()) {
+      setMessage("Choose media and enter a production note first.");
+      return;
+    }
+
+    setMediaStatus("uploading");
+    const form = new FormData();
+    form.set("media", mediaFile);
+    form.set("stage", stage);
+    form.set("note", note);
+    form.set("visibility", visibility);
+    let response: Response;
+
+    try {
+      response = await fetch(`/api/admin/orders/${selectedOrder.id}/production-media`, { method: "POST", body: form });
+    } catch {
+      setMessage("Production media upload could not reach the server.");
+      setMediaStatus("idle");
+      return;
+    }
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      setMessage(body?.error ?? "Production media upload failed.");
+      setMediaStatus("idle");
+      return;
+    }
+
+    setMediaFile(null);
+    setNote("");
+    setMediaStatus("idle");
+    setMessage("Production media added.");
     await loadDashboard(selectedStatus);
   }
 
@@ -308,6 +346,21 @@ export function AdminDashboard() {
                     </select>
                   </label>
                   <button className="button secondary" type="button" onClick={addUpdate}>Add update</button>
+                </div>
+
+                <div className="admin-actions">
+                  <label>
+                    Production photo or video
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                      disabled={mediaStatus === "uploading"}
+                      onChange={(event) => setMediaFile(event.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                  <button className="button secondary" type="button" onClick={uploadProductionMedia} disabled={!mediaFile || !note.trim() || mediaStatus === "uploading"}>
+                    {mediaStatus === "uploading" ? "Uploading..." : "Add media update"}
+                  </button>
                 </div>
 
                 <div className="admin-actions">

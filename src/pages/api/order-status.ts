@@ -41,6 +41,7 @@ type ProductionUpdateRow = {
   stage: string;
   note: string;
   media_type: string | null;
+  media_storage_key: string | null;
   created_at: string;
 };
 
@@ -122,7 +123,7 @@ export const POST: APIRoute = async ({ request }) => {
       .bind(order.id)
       .all<ProofRow>(),
     env.DB.prepare(
-      `SELECT id, stage, note, media_type, created_at
+      `SELECT id, stage, note, media_type, media_storage_key, created_at
        FROM production_updates
        WHERE order_id = ? AND visibility = 'customer'
        ORDER BY created_at DESC
@@ -159,7 +160,12 @@ export const POST: APIRoute = async ({ request }) => {
       ...proof,
       accessUrl: order.tracking_token ? `/api/order-proofs/${encodeURIComponent(proof.id)}?token=${encodeURIComponent(order.tracking_token)}` : null,
     })),
-    updates: updates.results,
+    updates: updates.results.map((update: ProductionUpdateRow) => ({
+      ...update,
+      mediaUrl: order.tracking_token && update.media_storage_key
+        ? `/api/order-media/${encodeURIComponent(update.id)}?token=${encodeURIComponent(order.tracking_token)}`
+        : null,
+    })),
     proofAccessToken: order.tracking_token,
   });
 };

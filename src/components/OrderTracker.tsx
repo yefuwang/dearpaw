@@ -41,6 +41,7 @@ type OrderStatus = {
     note: string;
     media_type: string | null;
     created_at: string;
+    mediaUrl: string | null;
   }>;
   proofAccessToken: string | null;
 };
@@ -231,7 +232,10 @@ export function OrderTracker() {
               {result.updates.length ? (
                 <ul className="plain-list">
                   {result.updates.map((update) => (
-                    <li key={update.id}>{update.stage}: {update.note}</li>
+                    <li key={update.id}>
+                      <span>{update.stage}: {update.note}</span>
+                      {update.mediaUrl && <a href={update.mediaUrl} target="_blank" rel="noreferrer">Open media</a>}
+                    </li>
                   ))}
                 </ul>
               ) : (
