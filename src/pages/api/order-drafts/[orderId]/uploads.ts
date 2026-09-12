@@ -88,11 +88,11 @@ export const POST: APIRoute = async ({ params, request }) => {
     .first<{ id: string; filename: string }>();
 
   if (existingUpload) {
+    const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM uploads WHERE order_id = ?").bind(orderId).first<{ count: number }>();
     await env.DB.prepare("UPDATE orders SET status = CASE WHEN (SELECT COUNT(*) FROM uploads WHERE order_id = ?) >= 3 THEN 'photos_received' ELSE status END, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
-      .bind(orderId, orderId)
-      .run();
+      .bind(orderId, orderId).run().catch(() => undefined);
     return Response.json(
-      { uploadId: existingUpload.id, filename: existingUpload.filename, status: "uploaded" },
+      { uploadId: existingUpload.id, filename: existingUpload.filename, photoCount: count?.count ?? 0, status: "uploaded" },
       { status: 200 },
     );
   }
@@ -137,14 +137,15 @@ export const POST: APIRoute = async ({ params, request }) => {
     throw error;
   }
 
+  const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM uploads WHERE order_id = ?").bind(orderId).first<{ count: number }>();
   await env.DB.prepare("UPDATE orders SET status = CASE WHEN (SELECT COUNT(*) FROM uploads WHERE order_id = ?) >= 3 THEN 'photos_received' ELSE status END, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
-    .bind(orderId, orderId)
-    .run();
+    .bind(orderId, orderId).run().catch(() => undefined);
 
   return Response.json(
     {
       uploadId,
       filename,
+      photoCount: count?.count ?? 0,
       status: "uploaded",
     },
     { status: 201 },

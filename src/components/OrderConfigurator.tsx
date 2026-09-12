@@ -20,6 +20,7 @@ export function OrderConfigurator() {
   const [uploadIds, setUploadIds] = useState<string[]>([]);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
+  const [uploadedPhotoCount, setUploadedPhotoCount] = useState(0);
   const [uploadError, setUploadError] = useState("");
   const [uploadProgress, setUploadProgress] = useState({ completed: 0, total: 0 });
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +45,8 @@ export function OrderConfigurator() {
     setStatus("submitting");
     setOrderId("");
     setCheckoutError("");
+    setUploadedNames([]);
+    setUploadedPhotoCount(0);
 
     let response: Response;
 
@@ -133,7 +136,7 @@ export function OrderConfigurator() {
         return;
       }
 
-      const result = (await response.json().catch(() => null)) as { filename?: string } | null;
+      const result = (await response.json().catch(() => null)) as { filename?: string; photoCount?: number } | null;
 
       if (!result?.filename) {
         setUploadedNames(names);
@@ -146,6 +149,7 @@ export function OrderConfigurator() {
 
       names.push(result.filename);
       setUploadedNames([...names]);
+      setUploadedPhotoCount(result.photoCount ?? uploadedPhotoCount + 1);
       setUploadProgress({ completed: index + 1, total: photos.length });
     }
 
@@ -326,10 +330,10 @@ export function OrderConfigurator() {
             <span>Draft saved.</span>
             <strong>Reference: {orderId}</strong>
             <a href={`/track?orderId=${encodeURIComponent(orderId)}`}>Track this draft</a>
-            <button className="button secondary" type="button" onClick={() => void startCheckout()} disabled={checkoutStatus === "starting" || uploadedNames.length < 3}>
+            <button className="button secondary" type="button" onClick={() => void startCheckout()} disabled={checkoutStatus === "starting" || uploadedPhotoCount < 3}>
               {checkoutStatus === "starting" ? "Opening checkout..." : "Continue to payment"}
             </button>
-            {uploadedNames.length < 3 && <small>Upload at least 3 photos before payment.</small>}
+            {uploadedPhotoCount < 3 && <small>Upload at least 3 photos before payment.</small>}
           </div>
         )}
         {checkoutError && <p className="form-status error">{checkoutError}</p>}
@@ -351,7 +355,6 @@ export function OrderConfigurator() {
                 const selectedPhotos = Array.from(event.target.files ?? []);
                 setPhotos(selectedPhotos);
                 setUploadIds(selectedPhotos.map(() => crypto.randomUUID()));
-                setUploadedNames([]);
                 setUploadError("");
                 setUploadProgress({ completed: 0, total: event.target.files?.length ?? 0 });
                 setUploadStatus("idle");
@@ -394,7 +397,7 @@ export function OrderConfigurator() {
               ? `Uploading ${uploadProgress.completed + 1} of ${uploadProgress.total}...`
               : `Upload ${photos.length || "selected"} photo${photos.length === 1 ? "" : "s"}`}
           </button>
-          {uploadStatus === "uploaded" && <p className="form-status success">Uploaded {uploadedNames.length} photo{uploadedNames.length === 1 ? "" : "s"}. {uploadedNames.length >= 3 ? "Your photos are ready for the next step." : "Add at least 3 photos to continue."}</p>}
+          {uploadStatus === "uploaded" && <p className="form-status success">Uploaded {uploadedNames.length} photo{uploadedNames.length === 1 ? "" : "s"}. {uploadedPhotoCount >= 3 ? "Your photos are ready for the next step." : "Add at least 3 photos to continue."}</p>}
           {uploadStatus === "error" && <p className="form-status error">{uploadError}</p>}
         </section>
       )}
