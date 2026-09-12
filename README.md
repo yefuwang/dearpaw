@@ -36,6 +36,22 @@ npm audit
 
 Spacelift watches the `terraform/` root. See `terraform/README.md` for required variables and provider credentials.
 
+## Secret Ownership
+
+Keep application secrets in the GitHub Actions `production` environment, not in Terraform variables or state. The production deploy workflow copies any configured values to the Workers with `wrangler secret put`; unset values are skipped.
+
+Configure these GitHub Actions environment secrets as needed:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `SES_ACCESS_KEY_ID`
+- `SES_SECRET_ACCESS_KEY`
+- `SES_FROM_EMAIL`
+- `SES_REGION`
+- `SES_ADMIN_EMAIL`
+
+Spacelift should contain only Terraform/OpenTofu inputs and provider credentials, such as `TF_VAR_cloudflare_account_id`, `TF_VAR_domain_name`, `CLOUDFLARE_API_TOKEN`, and AWS credentials used by the SES Terraform resources. Never put Stripe or SES application secret values in Terraform state.
+
 ## Transactional Email
 
 The Worker uses Amazon SES v2 for draft confirmations and contact notifications. Set these as Worker secrets after SES sending is ready:

@@ -52,6 +52,36 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
+      - name: Sync application secrets
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          SES_ACCESS_KEY_ID: ${{ secrets.SES_ACCESS_KEY_ID }}
+          SES_SECRET_ACCESS_KEY: ${{ secrets.SES_SECRET_ACCESS_KEY }}
+          SES_FROM_EMAIL: ${{ secrets.SES_FROM_EMAIL }}
+          SES_REGION: ${{ secrets.SES_REGION }}
+          SES_ADMIN_EMAIL: ${{ secrets.SES_ADMIN_EMAIL }}
+        run: |
+          set -euo pipefail
+          put_secret() {
+            local name="$1"
+            local value="$2"
+            if [[ -z "$value" ]]; then
+              echo "Skipping unset optional Worker secret: $name"
+              return
+            fi
+            printf '%s' "$value" | npx wrangler secret put "$name"
+          }
+          put_secret STRIPE_SECRET_KEY "$STRIPE_SECRET_KEY"
+          put_secret STRIPE_WEBHOOK_SECRET "$STRIPE_WEBHOOK_SECRET"
+          put_secret SES_ACCESS_KEY_ID "$SES_ACCESS_KEY_ID"
+          put_secret SES_SECRET_ACCESS_KEY "$SES_SECRET_ACCESS_KEY"
+          put_secret SES_FROM_EMAIL "$SES_FROM_EMAIL"
+          put_secret SES_REGION "$SES_REGION"
+          put_secret SES_ADMIN_EMAIL "$SES_ADMIN_EMAIL"
+
       - name: Deploy generation consumer
         run: npx wrangler deploy --config wrangler.generation.jsonc
         env:
