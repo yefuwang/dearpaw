@@ -40,6 +40,11 @@ async function orderPaymentStatus(orderId: string) {
 }
 
 async function queueGeneration(orderId: string) {
+  const existingJob = await env.DB.prepare("SELECT id, enqueued_at FROM generation_jobs WHERE order_id = ?")
+    .bind(orderId)
+    .first<{ id: string; enqueued_at: string | null }>();
+  if (existingJob?.enqueued_at) return;
+
   const uploads = await env.DB.prepare(
     "SELECT id, storage_key, filename, mime_type FROM uploads WHERE order_id = ? ORDER BY created_at ASC LIMIT 20",
   ).bind(orderId).all<{ id: string; storage_key: string; filename: string; mime_type: string }>();
@@ -53,12 +58,14 @@ async function queueGeneration(orderId: string) {
       mimeType: upload.mime_type,
     })),
   });
-  const jobId = crypto.randomUUID();
-  const insertResult = await env.DB.prepare(
+  const jobId = existingJob?.id ?? crypto.randomUUID();
+  await env.DB.prepare(
     "INSERT OR IGNORE INTO generation_jobs (id, order_id, status, input_manifest) VALUES (?, ?, 'queued', ?)",
   ).bind(jobId, orderId, inputManifest).run();
-  if (insertResult.meta.changes === 0) return;
   await env.JOBS.send({ type: "generate_memorial", jobId, orderId, input: JSON.parse(inputManifest) });
+  await env.DB.prepare("UPDATE generation_jobs SET enqueued_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+    .bind(jobId)
+    .run();
 }
 
 export const POST: APIRoute = async ({ request }) => {
