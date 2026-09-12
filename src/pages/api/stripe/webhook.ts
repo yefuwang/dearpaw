@@ -30,7 +30,7 @@ async function validSignature(payload: string, header: string, secret: string) {
 type StripeEvent = {
   id?: string;
   type?: string;
-  data?: { object?: { id?: string; metadata?: { order_id?: string }; payment_status?: string; amount_total?: number | null; total_details?: { amount_tax?: number | null } } };
+  data?: { object?: { id?: string; metadata?: { order_id?: string }; payment_status?: string; amount_total?: number | null; total_details?: { amount_tax?: number | null }; shipping_details?: { name?: string | null; address?: { line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null } | null } | null } };
 };
 
 async function orderPaymentStatus(orderId: string) {
@@ -68,6 +68,19 @@ async function queueGeneration(orderId: string) {
     .run();
 }
 
+function shippingValues(session: NonNullable<NonNullable<StripeEvent["data"]>["object"]>) {
+  const address = session.shipping_details?.address;
+  return [
+    session.shipping_details?.name ?? null,
+    address?.line1 ?? null,
+    address?.line2 ?? null,
+    address?.city ?? null,
+    address?.state ?? null,
+    address?.postal_code ?? null,
+    address?.country ?? null,
+  ];
+}
+
 export const POST: APIRoute = async ({ request }) => {
   if (!env.STRIPE_WEBHOOK_SECRET) return new Response("Webhook not configured", { status: 503 });
   const payload = await request.text();
@@ -86,13 +99,13 @@ export const POST: APIRoute = async ({ request }) => {
   const orderId = session?.metadata?.order_id;
   const sessionId = session?.id;
   if (orderId && sessionId && event.type === "checkout.session.completed" && session.payment_status === "paid") {
-    const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', total_cents = COALESCE(?, total_cents), tax_cents = COALESCE(?, tax_cents), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(session.amount_total ?? null, session.total_details?.amount_tax ?? null, orderId, sessionId).run();
+    const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', total_cents = COALESCE(?, total_cents), tax_cents = COALESCE(?, tax_cents), shipping_name = COALESCE(?, shipping_name), shipping_address_line1 = COALESCE(?, shipping_address_line1), shipping_address_line2 = COALESCE(?, shipping_address_line2), shipping_city = COALESCE(?, shipping_city), shipping_state = COALESCE(?, shipping_state), shipping_postal_code = COALESCE(?, shipping_postal_code), shipping_country = COALESCE(?, shipping_country), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(session.amount_total ?? null, session.total_details?.amount_tax ?? null, ...shippingValues(session), orderId, sessionId).run();
     const order = result.meta.changes === 0 ? await orderPaymentStatus(orderId) : null;
     if (order && order.stripe_checkout_session_id !== sessionId) return new Response("ok", { status: 200 });
     if (result.meta.changes === 0 && order?.payment_status !== "paid") return new Response("Order is not ready for this payment event", { status: 500 });
     await queueGeneration(orderId);
   } else if (orderId && sessionId && event.type === "checkout.session.async_payment_succeeded") {
-    const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', total_cents = COALESCE(?, total_cents), tax_cents = COALESCE(?, tax_cents), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(session.amount_total ?? null, session.total_details?.amount_tax ?? null, orderId, sessionId).run();
+    const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', total_cents = COALESCE(?, total_cents), tax_cents = COALESCE(?, tax_cents), shipping_name = COALESCE(?, shipping_name), shipping_address_line1 = COALESCE(?, shipping_address_line1), shipping_address_line2 = COALESCE(?, shipping_address_line2), shipping_city = COALESCE(?, shipping_city), shipping_state = COALESCE(?, shipping_state), shipping_postal_code = COALESCE(?, shipping_postal_code), shipping_country = COALESCE(?, shipping_country), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(session.amount_total ?? null, session.total_details?.amount_tax ?? null, ...shippingValues(session), orderId, sessionId).run();
     const order = result.meta.changes === 0 ? await orderPaymentStatus(orderId) : null;
     if (order && order.stripe_checkout_session_id !== sessionId) return new Response("ok", { status: 200 });
     if (result.meta.changes === 0 && order?.payment_status !== "paid") return new Response("Order is not ready for this payment event", { status: 500 });
