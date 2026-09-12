@@ -56,6 +56,9 @@ export const POST: APIRoute = async ({ request }) => {
 
   const params = new URLSearchParams();
   params.set("mode", "payment");
+  params.set("automatic_tax[enabled]", "true");
+  params.set("customer_creation", "always");
+  params.set("shipping_address_collection[allowed_countries][0]", "US");
   params.set("success_url", `https://dearpaw.rip/track?orderId=${encodeURIComponent(order.id)}&checkout=success`);
   params.set("cancel_url", `https://dearpaw.rip/track?orderId=${encodeURIComponent(order.id)}&checkout=cancelled`);
   params.set("customer_email", order.email);

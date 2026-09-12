@@ -30,7 +30,7 @@ async function validSignature(payload: string, header: string, secret: string) {
 type StripeEvent = {
   id?: string;
   type?: string;
-  data?: { object?: { id?: string; metadata?: { order_id?: string }; payment_status?: string } };
+  data?: { object?: { id?: string; metadata?: { order_id?: string }; payment_status?: string; amount_total?: number | null; total_details?: { amount_tax?: number | null } } };
 };
 
 async function orderPaymentStatus(orderId: string) {
@@ -86,13 +86,13 @@ export const POST: APIRoute = async ({ request }) => {
   const orderId = session?.metadata?.order_id;
   const sessionId = session?.id;
   if (orderId && sessionId && event.type === "checkout.session.completed" && session.payment_status === "paid") {
-    const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(orderId, sessionId).run();
+    const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', total_cents = COALESCE(?, total_cents), tax_cents = COALESCE(?, tax_cents), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(session.amount_total ?? null, session.total_details?.amount_tax ?? null, orderId, sessionId).run();
     const order = result.meta.changes === 0 ? await orderPaymentStatus(orderId) : null;
     if (order && order.stripe_checkout_session_id !== sessionId) return new Response("ok", { status: 200 });
     if (result.meta.changes === 0 && order?.payment_status !== "paid") return new Response("Order is not ready for this payment event", { status: 500 });
     await queueGeneration(orderId);
   } else if (orderId && sessionId && event.type === "checkout.session.async_payment_succeeded") {
-    const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(orderId, sessionId).run();
+    const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', total_cents = COALESCE(?, total_cents), tax_cents = COALESCE(?, tax_cents), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(session.amount_total ?? null, session.total_details?.amount_tax ?? null, orderId, sessionId).run();
     const order = result.meta.changes === 0 ? await orderPaymentStatus(orderId) : null;
     if (order && order.stripe_checkout_session_id !== sessionId) return new Response("ok", { status: 200 });
     if (result.meta.changes === 0 && order?.payment_status !== "paid") return new Response("Order is not ready for this payment event", { status: 500 });

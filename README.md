@@ -60,6 +60,7 @@ npx wrangler secret put STRIPE_WEBHOOK_SECRET
 ```
 
 Configure the Stripe webhook endpoint as `https://dearpaw.rip/api/stripe/webhook` and subscribe to `checkout.session.completed` and `checkout.session.expired`.
+Stripe Checkout enables automatic tax and collects a US shipping address for the physical memorial. Activate Stripe Tax, set the business origin, default tax behavior/product tax code, and add tax registrations in the Stripe Dashboard before accepting live payments. See [Stripe Tax for Checkout](https://docs.stripe.com/tax/checkout).
 
 ## AI/3D Generation Boundary
 
