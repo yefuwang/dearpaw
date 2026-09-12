@@ -39,6 +39,28 @@ async function orderPaymentStatus(orderId: string) {
     .first<{ payment_status: string; stripe_checkout_session_id: string | null }>();
 }
 
+async function queueGeneration(orderId: string) {
+  const uploads = await env.DB.prepare(
+    "SELECT id, storage_key, filename, mime_type FROM uploads WHERE order_id = ? ORDER BY created_at ASC LIMIT 20",
+  ).bind(orderId).all<{ id: string; storage_key: string; filename: string; mime_type: string }>();
+  if (uploads.results.length < 3) throw new Error("Generation requires at least 3 uploaded photos.");
+
+  const inputManifest = JSON.stringify({
+    photos: uploads.results.map((upload: { id: string; storage_key: string; filename: string; mime_type: string }) => ({
+      id: upload.id,
+      key: upload.storage_key,
+      filename: upload.filename,
+      mimeType: upload.mime_type,
+    })),
+  });
+  const jobId = crypto.randomUUID();
+  const insertResult = await env.DB.prepare(
+    "INSERT OR IGNORE INTO generation_jobs (id, order_id, status, input_manifest) VALUES (?, ?, 'queued', ?)",
+  ).bind(jobId, orderId, inputManifest).run();
+  if (insertResult.meta.changes === 0) return;
+  await env.JOBS.send({ type: "generate_memorial", jobId, orderId, input: JSON.parse(inputManifest) });
+}
+
 export const POST: APIRoute = async ({ request }) => {
   if (!env.STRIPE_WEBHOOK_SECRET) return new Response("Webhook not configured", { status: 503 });
   const payload = await request.text();
@@ -61,11 +83,13 @@ export const POST: APIRoute = async ({ request }) => {
     const order = result.meta.changes === 0 ? await orderPaymentStatus(orderId) : null;
     if (order && order.stripe_checkout_session_id !== sessionId) return new Response("ok", { status: 200 });
     if (result.meta.changes === 0 && order?.payment_status !== "paid") return new Response("Order is not ready for this payment event", { status: 500 });
+    await queueGeneration(orderId);
   } else if (orderId && sessionId && event.type === "checkout.session.async_payment_succeeded") {
     const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(orderId, sessionId).run();
     const order = result.meta.changes === 0 ? await orderPaymentStatus(orderId) : null;
     if (order && order.stripe_checkout_session_id !== sessionId) return new Response("ok", { status: 200 });
     if (result.meta.changes === 0 && order?.payment_status !== "paid") return new Response("Order is not ready for this payment event", { status: 500 });
+    await queueGeneration(orderId);
   } else if (orderId && sessionId && event.type === "checkout.session.expired") {
     const result = await env.DB.prepare("UPDATE orders SET status = 'draft', payment_status = 'not_started', stripe_checkout_session_id = NULL, stripe_checkout_attempt = stripe_checkout_attempt + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(orderId, sessionId).run();
     if (result.meta.changes === 0) {

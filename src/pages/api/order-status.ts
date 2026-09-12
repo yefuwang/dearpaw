@@ -132,6 +132,9 @@ export const POST: APIRoute = async ({ request }) => {
       .bind(order.id)
       .all<ProductionUpdateRow>(),
   ]);
+  const generation = await env.DB.prepare(
+    "SELECT status, provider, created_at, updated_at FROM generation_jobs WHERE order_id = ?",
+  ).bind(order.id).first<{ status: string; provider: string | null; created_at: string; updated_at: string }>();
 
   return Response.json({
     order: {
@@ -170,6 +173,9 @@ export const POST: APIRoute = async ({ request }) => {
         ? `/api/order-media/${encodeURIComponent(update.id)}?token=${encodeURIComponent(order.tracking_token)}`
         : null,
     })),
+    generation: generation
+      ? { status: generation.status, provider: generation.provider, createdAt: generation.created_at, updatedAt: generation.updated_at }
+      : null,
     proofAccessToken: order.tracking_token,
   }, { headers: { "cache-control": "no-store" } });
 };

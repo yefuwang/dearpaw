@@ -43,6 +43,12 @@ type OrderStatus = {
     created_at: string;
     mediaUrl: string | null;
   }>;
+  generation: {
+    status: string;
+    provider: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
   proofAccessToken: string | null;
 };
 
@@ -240,6 +246,14 @@ export function OrderTracker() {
                 </ul>
               ) : (
                 <p>No production updates yet.</p>
+              )}
+            </section>
+            <section>
+              <h3>Portrait</h3>
+              {result.generation ? (
+                <p>Your portrait preparation is {result.generation.status.replaceAll("_", " ")}.</p>
+              ) : (
+                <p>Portrait preparation begins after payment.</p>
               )}
             </section>
             <section>
