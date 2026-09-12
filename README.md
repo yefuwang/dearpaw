@@ -60,3 +60,16 @@ npx wrangler secret put STRIPE_WEBHOOK_SECRET
 ```
 
 Configure the Stripe webhook endpoint as `https://dearpaw.rip/api/stripe/webhook` and subscribe to `checkout.session.completed` and `checkout.session.expired`.
+
+## AI/3D Generation Boundary
+
+After confirmed payment, the app creates a `generation_jobs` record and sends a `generate_memorial` message to `dearpaw-jobs`. A companion Worker consumes the message. Until a provider is selected, it records `provider_not_configured` rather than attempting generation.
+
+When a provider endpoint is ready, set these values on the `dearpaw-generation` Worker:
+
+```sh
+npx wrangler secret put GENERATION_API_URL --config wrangler.generation.jsonc
+npx wrangler secret put GENERATION_API_TOKEN --config wrangler.generation.jsonc
+```
+
+The endpoint receives the job payload and must return JSON with an `outputManifest` value. Generated assets should be written to the private R2 bucket and referenced by keys in that manifest.

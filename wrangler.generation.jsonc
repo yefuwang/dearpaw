@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dearpaw-generation",
+  "main": "src/generation-worker.ts",
+  "compatibility_date": "2026-08-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dearpaw-app",
+      "database_id": "c686cf0a-d422-46eb-97f1-5ef8df0b1654"
+    }
+  ],
+  "queues": {
+    "consumers": [
+      {
+        "queue": "dearpaw-jobs",
+        "max_batch_size": 5,
+        "max_batch_timeout": 10
+      }
+    ]
+  }
+}
