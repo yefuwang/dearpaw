@@ -394,7 +394,7 @@ export function OrderConfigurator() {
               ? `Uploading ${uploadProgress.completed + 1} of ${uploadProgress.total}...`
               : `Upload ${photos.length || "selected"} photo${photos.length === 1 ? "" : "s"}`}
           </button>
-          {uploadStatus === "uploaded" && <p className="form-status success">Uploaded {uploadedNames.length} photo{uploadedNames.length === 1 ? "" : "s"}.</p>}
+          {uploadStatus === "uploaded" && <p className="form-status success">Uploaded {uploadedNames.length} photo{uploadedNames.length === 1 ? "" : "s"}. {uploadedNames.length >= 3 ? "Your photos are ready for the next step." : "Add at least 3 photos to continue."}</p>}
           {uploadStatus === "error" && <p className="form-status error">{uploadError}</p>}
         </section>
       )}

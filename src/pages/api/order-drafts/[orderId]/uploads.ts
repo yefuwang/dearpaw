@@ -50,7 +50,7 @@ export const POST: APIRoute = async ({ params, request }) => {
     return Response.json({ error: "Missing order id." }, { status: 400 });
   }
 
-  const order = await env.DB.prepare("SELECT id FROM orders WHERE id = ? AND status = 'draft'")
+  const order = await env.DB.prepare("SELECT id FROM orders WHERE id = ? AND status IN ('draft', 'photos_received')")
     .bind(orderId)
     .first<{ id: string }>();
 
@@ -88,6 +88,9 @@ export const POST: APIRoute = async ({ params, request }) => {
     .first<{ id: string; filename: string }>();
 
   if (existingUpload) {
+    await env.DB.prepare("UPDATE orders SET status = CASE WHEN (SELECT COUNT(*) FROM uploads WHERE order_id = ?) >= 3 THEN 'photos_received' ELSE status END, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .bind(orderId, orderId)
+      .run();
     return Response.json(
       { uploadId: existingUpload.id, filename: existingUpload.filename, status: "uploaded" },
       { status: 200 },
@@ -133,6 +136,10 @@ export const POST: APIRoute = async ({ params, request }) => {
     await env.ASSETS_BUCKET.delete(storageKey);
     throw error;
   }
+
+  await env.DB.prepare("UPDATE orders SET status = CASE WHEN (SELECT COUNT(*) FROM uploads WHERE order_id = ?) >= 3 THEN 'photos_received' ELSE status END, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+    .bind(orderId, orderId)
+    .run();
 
   return Response.json(
     {
