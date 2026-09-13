@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
+import { logEvent } from "../../../lib/observability";
 
 export const prerender = false;
 
@@ -81,7 +82,7 @@ function shippingValues(session: NonNullable<NonNullable<StripeEvent["data"]>["o
   ];
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   if (!env.STRIPE_WEBHOOK_SECRET) return new Response("Webhook not configured", { status: 503 });
   const payload = await request.text();
   if (!(await validSignature(payload, request.headers.get("stripe-signature") ?? "", env.STRIPE_WEBHOOK_SECRET))) return new Response("Invalid signature", { status: 400 });
@@ -98,6 +99,7 @@ export const POST: APIRoute = async ({ request }) => {
   const session = event.data?.object;
   const orderId = session?.metadata?.order_id;
   const sessionId = session?.id;
+  logEvent("stripe_webhook_received", { requestId: locals.requestId, eventId: event.id, eventType: event.type, orderId: orderId ?? null });
   if (orderId && sessionId && event.type === "checkout.session.completed" && session.payment_status === "paid") {
     const result = await env.DB.prepare("UPDATE orders SET status = 'paid', payment_status = 'paid', total_cents = COALESCE(?, total_cents), tax_cents = COALESCE(?, tax_cents), shipping_name = COALESCE(?, shipping_name), shipping_address_line1 = COALESCE(?, shipping_address_line1), shipping_address_line2 = COALESCE(?, shipping_address_line2), shipping_city = COALESCE(?, shipping_city), shipping_state = COALESCE(?, shipping_state), shipping_postal_code = COALESCE(?, shipping_postal_code), shipping_country = COALESCE(?, shipping_country), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stripe_checkout_session_id = ? AND payment_status != 'paid'").bind(session.amount_total ?? null, session.total_details?.amount_tax ?? null, ...shippingValues(session), orderId, sessionId).run();
     const order = result.meta.changes === 0 ? await orderPaymentStatus(orderId) : null;

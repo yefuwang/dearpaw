@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
+import { logEvent } from "../../../../lib/observability";
 
 export const prerender = false;
 
@@ -43,7 +44,7 @@ async function hasExpectedSignature(photo: File) {
   return false;
 }
 
-export const POST: APIRoute = async ({ params, request }) => {
+export const POST: APIRoute = async ({ params, request, locals }) => {
   const orderId = params.orderId?.trim();
 
   if (!orderId) {
@@ -140,6 +141,15 @@ export const POST: APIRoute = async ({ params, request }) => {
   const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM uploads WHERE order_id = ?").bind(orderId).first<{ count: number }>();
   await env.DB.prepare("UPDATE orders SET status = CASE WHEN (SELECT COUNT(*) FROM uploads WHERE order_id = ?) >= 3 THEN 'photos_received' ELSE status END, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
     .bind(orderId, orderId).run().catch(() => undefined);
+
+  logEvent("order_photo_uploaded", {
+    requestId: locals.requestId,
+    orderId,
+    uploadId,
+    filename,
+    byteSize: photo.size,
+    photoCount: count?.count ?? 0,
+  });
 
   return Response.json(
     {

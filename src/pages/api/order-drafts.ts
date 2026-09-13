@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { productOptions } from "../../data/site";
 import { sendEmailBestEffort } from "../../lib/email";
+import { logEvent } from "../../lib/observability";
 
 export const prerender = false;
 
@@ -18,7 +19,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   let input: unknown;
 
   try {
@@ -119,6 +120,14 @@ export const POST: APIRoute = async ({ request }) => {
     to: email,
     subject: "Your Dear Paw memorial draft",
     text: `We saved your memorial draft for ${petName}.\n\nYour order reference is ${orderId}. You can track it at https://dearpaw.rip/track?orderId=${orderId}\n\nYou can add photos from the order page when you are ready.`,
+  });
+
+  logEvent("order_draft_created", {
+    requestId: locals.requestId,
+    orderId,
+    email,
+    petName,
+    totalCents,
   });
 
   return Response.json(

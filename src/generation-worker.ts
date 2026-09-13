@@ -37,6 +37,7 @@ function isGenerationMessage(value: unknown): value is GenerationMessage {
 }
 
 async function processMessage(message: GenerationMessage, env: GenerationEnv) {
+  console.log(JSON.stringify({ event: "generation_job_received", jobId: message.jobId, orderId: message.orderId }));
   const job = await env.DB.prepare("SELECT status FROM generation_jobs WHERE id = ? AND order_id = ?")
     .bind(message.jobId, message.orderId)
     .first<{ status: string }>();
@@ -50,6 +51,7 @@ async function processMessage(message: GenerationMessage, env: GenerationEnv) {
     await env.DB.prepare("UPDATE generation_jobs SET status = 'failed', error_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
       .bind("provider_not_configured", message.jobId)
       .run();
+    console.log(JSON.stringify({ event: "generation_job_failed", jobId: message.jobId, orderId: message.orderId, reason: "provider_not_configured" }));
     return;
   }
 
@@ -67,6 +69,7 @@ async function processMessage(message: GenerationMessage, env: GenerationEnv) {
     await env.DB.prepare("UPDATE generation_jobs SET status = 'failed', error_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
       .bind("generation_provider_unreachable", message.jobId)
       .run();
+    console.error(JSON.stringify({ event: "generation_job_failed", jobId: message.jobId, orderId: message.orderId, reason: "provider_unreachable" }));
     return;
   }
 
@@ -75,12 +78,14 @@ async function processMessage(message: GenerationMessage, env: GenerationEnv) {
     await env.DB.prepare("UPDATE generation_jobs SET status = 'failed', error_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
       .bind(body?.error?.slice(0, 500) ?? "generation_provider_failed", message.jobId)
       .run();
+    console.error(JSON.stringify({ event: "generation_job_failed", jobId: message.jobId, orderId: message.orderId, reason: "provider_failed", status: response.status }));
     return;
   }
 
   await env.DB.prepare("UPDATE generation_jobs SET status = 'succeeded', provider = ?, output_manifest = ?, error_message = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
     .bind(new URL(env.GENERATION_API_URL).hostname, JSON.stringify(body.outputManifest), message.jobId)
     .run();
+  console.log(JSON.stringify({ event: "generation_job_succeeded", jobId: message.jobId, orderId: message.orderId, provider: new URL(env.GENERATION_API_URL).hostname }));
 }
 
 export default {

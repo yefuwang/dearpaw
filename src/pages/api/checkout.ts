@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
+import { logEvent } from "../../lib/observability";
 
 export const prerender = false;
 
@@ -11,7 +12,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "Invalid request origin." }, { status: 403 });
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) return Response.json({ error: "JSON content type is required." }, { status: 415 });
@@ -85,5 +86,12 @@ export const POST: APIRoute = async ({ request }) => {
   } catch {
     return Response.json({ error: "Checkout was created but could not be saved. Please try again." }, { status: 502 });
   }
+  logEvent("checkout_session_created", {
+    requestId: locals.requestId,
+    orderId: order.id,
+    email: order.email,
+    stripeSessionId: session.id,
+    totalCents: order.total_cents,
+  });
   return Response.json({ sessionId: session.id, url: session.url, status: "awaiting_payment" });
 };
