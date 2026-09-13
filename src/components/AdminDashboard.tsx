@@ -210,21 +210,25 @@ export function AdminDashboard({ orderId }: AdminDashboardProps) {
     setProofStatus("uploading");
     const form = new FormData();
     form.set("proof", proofFile);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 60_000);
     let response: Response;
 
     try {
-      response = await fetch(`/admin/api/orders/${selectedOrder.id}/proofs`, { method: "POST", body: form });
+      response = await fetch(`/admin/api/orders/${selectedOrder.id}/proofs`, { method: "POST", body: form, signal: controller.signal });
     } catch {
       setMessageKind("error");
-      setMessage("Proof upload could not reach the server.");
+      setMessage("Proof upload timed out or could not reach the server. Please retry.");
       setProofStatus("idle");
       return;
+    } finally {
+      window.clearTimeout(timeout);
     }
 
     if (!response.ok) {
       setMessageKind("error");
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
-      setMessage(body?.error ?? "Proof upload failed.");
+      setMessage(body?.error ?? `Proof upload failed (HTTP ${response.status}).`);
       setProofStatus("idle");
       return;
     }
