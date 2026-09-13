@@ -85,16 +85,33 @@ export function AdminDashboard() {
     setMessage("");
 
     const url = status ? `/api/admin/dashboard?status=${encodeURIComponent(status)}` : "/api/admin/dashboard";
-    const response = await fetch(url);
-
-    if (!response.ok) {
+    let response: Response;
+    try {
+      response = await fetch(url);
+    } catch {
       setMessageKind("error");
-      setMessage("Unable to load admin data.");
+      setMessage("Unable to reach the admin data service.");
       setLoading(false);
       return;
     }
 
-    const body = (await response.json()) as DashboardData;
+    if (!response.ok || !response.headers.get("content-type")?.toLowerCase().includes("application/json")) {
+      setMessageKind("error");
+      setMessage("Unable to load admin data. Please sign in again and retry.");
+      setLoading(false);
+      return;
+    }
+
+    let body: DashboardData;
+    try {
+      body = (await response.json()) as DashboardData;
+    } catch {
+      setMessageKind("error");
+      setMessage("Unable to read admin data. Please retry.");
+      setLoading(false);
+      return;
+    }
+
     setData(body);
     setSelectedOrderId((current) => (current && body.orders.some((order) => order.id === current) ? current : body.orders[0]?.id ?? ""));
     setNextStatus((current) => current || body.orders[0]?.status || "draft");

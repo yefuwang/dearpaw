@@ -18,7 +18,7 @@ resource "cloudflare_zero_trust_access_application" "admin" {
   type                     = "self_hosted"
   domain                   = "${var.domain_name}/admin*"
   session_duration         = "24h"
-  path_cookie_attribute    = true
+  path_cookie_attribute    = false
   app_launcher_visible     = false
   skip_interstitial        = true
   options_preflight_bypass = true
@@ -35,7 +35,7 @@ resource "cloudflare_zero_trust_access_application" "admin_api" {
   type                     = "self_hosted"
   domain                   = "${var.domain_name}/api/admin*"
   session_duration         = "24h"
-  path_cookie_attribute    = true
+  path_cookie_attribute    = false
   app_launcher_visible     = false
   skip_interstitial        = true
   options_preflight_bypass = true
