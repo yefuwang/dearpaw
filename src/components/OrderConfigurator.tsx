@@ -330,13 +330,8 @@ export function OrderConfigurator() {
             <span>Draft saved.</span>
             <strong>Reference: {orderId}</strong>
             <a href={`/track?orderId=${encodeURIComponent(orderId)}`}>Track this draft</a>
-            <button className="button secondary" type="button" onClick={() => void startCheckout()} disabled={checkoutStatus === "starting" || uploadedPhotoCount < 3}>
-              {checkoutStatus === "starting" ? "Opening checkout..." : "Continue to payment"}
-            </button>
-            {uploadedPhotoCount < 3 && <small>Upload at least 3 photos before payment.</small>}
           </div>
         )}
-        {checkoutError && <p className="form-status error">{checkoutError}</p>}
         {status === "error" && <p className="form-status error">{errorMessage}</p>}
       </div>
 
@@ -397,8 +392,20 @@ export function OrderConfigurator() {
               ? `Uploading ${uploadProgress.completed + 1} of ${uploadProgress.total}...`
               : `Upload ${photos.length || "selected"} photo${photos.length === 1 ? "" : "s"}`}
           </button>
-          {uploadStatus === "uploaded" && <p className="form-status success">Uploaded {uploadedNames.length} photo{uploadedNames.length === 1 ? "" : "s"}. {uploadedPhotoCount >= 3 ? "Your photos are ready for the next step." : "Add at least 3 photos to continue."}</p>}
+          {uploadStatus === "uploaded" && (
+            <>
+              <p className="form-status success">
+                Uploaded {uploadedNames.length} photo{uploadedNames.length === 1 ? "" : "s"}. {uploadedPhotoCount >= 3 ? "Your photos are ready for the next step." : "Add at least 3 photos to continue."}
+              </p>
+              {uploadedPhotoCount >= 3 && (
+                <button className="button" type="button" onClick={() => void startCheckout()} disabled={checkoutStatus === "starting"}>
+                  {checkoutStatus === "starting" ? "Opening checkout..." : "Continue to payment"}
+                </button>
+              )}
+            </>
+          )}
           {uploadStatus === "error" && <p className="form-status error">{uploadError}</p>}
+          {checkoutError && <p className="form-status error">{checkoutError}</p>}
         </section>
       )}
     </form>
