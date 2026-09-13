@@ -70,6 +70,7 @@ export function AdminDashboard({ orderId }: AdminDashboardProps) {
   const [stage, setStage] = useState("general");
   const [visibility, setVisibility] = useState("customer");
   const [note, setNote] = useState("");
+  const [productionUpdateStatus, setProductionUpdateStatus] = useState<"idle" | "submitting">("idle");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofStatus, setProofStatus] = useState<"idle" | "uploading">("idle");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -167,23 +168,35 @@ export function AdminDashboard({ orderId }: AdminDashboardProps) {
       return;
     }
 
-    const response = await fetch(`/admin/api/orders/${selectedOrder.id}/production-updates`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ stage, note, visibility }),
-    });
+    setProductionUpdateStatus("submitting");
+    let response: Response;
+    try {
+      response = await fetch(`/admin/api/orders/${selectedOrder.id}/production-updates`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ stage, note, visibility }),
+      });
+    } catch {
+      setMessageKind("error");
+      setMessage("Production update could not reach the server.");
+      setProductionUpdateStatus("idle");
+      return;
+    }
 
     if (!response.ok) {
       setMessageKind("error");
-      setMessage("Production update failed.");
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      setMessage(body?.error ?? "Production update failed.");
+      setProductionUpdateStatus("idle");
       return;
     }
 
     setNote("");
     setMessageKind("success");
     setMessage("Production update added.");
+    setProductionUpdateStatus("idle");
     await loadDashboard(selectedStatus);
   }
 
@@ -416,7 +429,9 @@ export function AdminDashboard({ orderId }: AdminDashboardProps) {
                       <option value="internal">Internal</option>
                     </select>
                   </label>
-                  <button className="button secondary" type="button" onClick={addUpdate}>Add update</button>
+                  <button className="button secondary" type="button" onClick={addUpdate} disabled={productionUpdateStatus === "submitting"}>
+                    {productionUpdateStatus === "submitting" ? "Adding..." : "Add update"}
+                  </button>
                 </div>
 
                 <div className="admin-actions">
