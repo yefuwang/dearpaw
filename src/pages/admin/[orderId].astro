@@ -1,0 +1,14 @@
+---
+import { AdminDashboard } from "../../components/AdminDashboard";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const { orderId } = Astro.params;
+---
+
+<BaseLayout title="Order detail | Dear Paw" description="Dear Paw internal order detail.">
+  <section class="section admin-section">
+    <div class="container">
+      <AdminDashboard client:load orderId={orderId} />
+    </div>
+  </section>
+</BaseLayout>

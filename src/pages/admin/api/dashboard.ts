@@ -3,7 +3,7 @@ import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
-const orderStatuses = new Set(["draft", "photos_received", "proofing", "approved", "production", "shipped", "completed", "canceled"]);
+const orderStatuses = new Set(["draft", "photos_received", "awaiting_payment", "paid", "proofing", "approved", "production", "shipped", "completed", "canceled"]);
 
 type OrderRow = {
   id: string;

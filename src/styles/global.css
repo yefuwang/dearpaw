@@ -764,6 +764,27 @@ textarea {
   font-size: 34px;
 }
 
+.priority-card {
+  border-color: var(--walnut);
+}
+
+.admin-section-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-section-heading h2 {
+  margin-bottom: 0;
+}
+
+.admin-section-heading > strong {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 42px;
+  line-height: 1;
+}
+
 .admin-list {
   display: grid;
   gap: 10px;
@@ -781,6 +802,10 @@ textarea {
   padding: 12px;
   text-align: left;
   cursor: pointer;
+}
+
+a.admin-row {
+  text-decoration: none;
 }
 
 .admin-row[aria-pressed="true"] {

@@ -45,6 +45,10 @@ type DashboardData = {
   updates: ProductionUpdate[];
 };
 
+type AdminDashboardProps = {
+  orderId?: string;
+};
+
 const productionStages = ["photos", "proof", "cnc", "painting", "finishing", "packing", "shipping", "general"];
 
 function formatMoney(cents: number) {
@@ -58,7 +62,7 @@ function shortId(id: string) {
   return id.slice(0, 8);
 }
 
-export function AdminDashboard() {
+export function AdminDashboard({ orderId }: AdminDashboardProps) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState("");
@@ -76,8 +80,8 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   const selectedOrder = useMemo(
-    () => data?.orders.find((order) => order.id === selectedOrderId) ?? data?.orders[0] ?? null,
-    [data, selectedOrderId],
+    () => data?.orders.find((order) => order.id === (orderId || selectedOrderId)) ?? (orderId ? null : data?.orders[0] ?? null),
+    [data, orderId, selectedOrderId],
   );
 
   async function loadDashboard(status = selectedStatus) {
@@ -113,8 +117,12 @@ export function AdminDashboard() {
     }
 
     setData(body);
-    setSelectedOrderId((current) => (current && body.orders.some((order) => order.id === current) ? current : body.orders[0]?.id ?? ""));
+    setSelectedOrderId((current) => (current && body.orders.some((order) => order.id === current) ? current : orderId || body.orders[0]?.id || ""));
     setNextStatus((current) => current || body.orders[0]?.status || "draft");
+    if (orderId && !body.orders.some((order) => order.id === orderId)) {
+      setMessageKind("error");
+      setMessage("Order not found.");
+    }
     setLoading(false);
   }
 
@@ -262,56 +270,83 @@ export function AdminDashboard() {
       <section className="admin-toolbar">
         <div>
           <p className="eyebrow">Admin</p>
-          <h1>Back office</h1>
+          <h1>{orderId ? "Order detail" : "Back office"}</h1>
         </div>
-        <label>
-          Status
-          <select
-            value={selectedStatus}
-            onChange={(event) => {
-              const value = event.target.value;
-              setSelectedStatus(value);
-              void loadDashboard(value);
-            }}
-          >
-            <option value="">All orders</option>
-            {data?.statuses.map((status) => (
-              <option key={status} value={status}>{status}</option>
-            ))}
-          </select>
-        </label>
+        {orderId ? <a className="button secondary" href="/admin">Back to overview</a> : (
+          <label>
+            Status
+            <select
+              value={selectedStatus}
+              onChange={(event) => {
+                const value = event.target.value;
+                setSelectedStatus(value);
+                void loadDashboard(value);
+              }}
+            >
+              <option value="">All orders</option>
+              {data?.statuses.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </label>
+        )}
       </section>
 
       {message && <p className={`form-status ${messageKind}`}>{message}</p>}
       {loading && <p className="panel">Loading admin data...</p>}
 
       {data && !loading && (
-        <div className="admin-grid">
-          <section className="admin-card">
+        <>
+          {!orderId && (
+            <section className="admin-card priority-card">
+              <div className="admin-section-heading">
+                <div>
+                  <p className="eyebrow">Needs attention</p>
+                  <h2>Paid, unfinished</h2>
+                </div>
+                <strong>{data.orders.filter((order) => order.payment_status === "paid" && !["completed", "canceled"].includes(order.status)).length}</strong>
+              </div>
+              <div className="admin-list">
+                {data.orders
+                  .filter((order) => order.payment_status === "paid" && !["completed", "canceled"].includes(order.status))
+                  .sort((left, right) => left.created_at.localeCompare(right.created_at))
+                  .map((order) => (
+                    <a className="admin-row" key={order.id} href={`/admin/${encodeURIComponent(order.id)}`}>
+                      <span>
+                        <strong>{order.pet_name}</strong>
+                        <small>{order.customer_name} · {shortId(order.id)} · {order.upload_count} photos</small>
+                      </span>
+                      <span className="status-pill">{order.status}</span>
+                    </a>
+                  ))}
+                {!data.orders.some((order) => order.payment_status === "paid" && !["completed", "canceled"].includes(order.status)) && <p>No paid orders are waiting for production work.</p>}
+              </div>
+            </section>
+          )}
+
+          <div className="admin-grid">
+          {!orderId && <section className="admin-card">
             <h2>Orders</h2>
             <div className="admin-list">
               {data.orders.map((order) => (
-                <button
+                <a
                   className="admin-row"
                   key={order.id}
-                  type="button"
-                  aria-pressed={order.id === selectedOrder?.id}
-                  onClick={() => setSelectedOrderId(order.id)}
-                  disabled={mediaStatus === "uploading"}
+                  href={`/admin/${encodeURIComponent(order.id)}`}
                 >
                   <span>
                     <strong>{order.pet_name}</strong>
                     <small>{order.customer_name} · {shortId(order.id)}</small>
                   </span>
                   <span className="status-pill">{order.status}</span>
-                </button>
+                </a>
               ))}
               {!data.orders.length && <p>No orders found.</p>}
             </div>
-          </section>
+          </section>}
 
           <section className="admin-card">
-            <h2>Selected Order</h2>
+            <h2>{orderId ? "Order details" : "Selected order"}</h2>
             {selectedOrder ? (
               <div className="admin-detail">
                 <div className="summary-grid">
@@ -450,7 +485,8 @@ export function AdminDashboard() {
               {!data.updates.length && <p>No production updates yet.</p>}
             </div>
           </section>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
