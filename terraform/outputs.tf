@@ -17,7 +17,6 @@ output "admin_access_domains" {
   description = "Cloudflare Access protected admin path patterns."
   value = [
     cloudflare_zero_trust_access_application.admin.domain,
-    cloudflare_zero_trust_access_application.admin_api.domain,
   ]
 }
 

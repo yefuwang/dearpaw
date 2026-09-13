@@ -84,7 +84,7 @@ export function AdminDashboard() {
     setLoading(true);
     setMessage("");
 
-    const url = status ? `/api/admin/dashboard?status=${encodeURIComponent(status)}` : "/api/admin/dashboard";
+    const url = status ? `/admin/api/dashboard?status=${encodeURIComponent(status)}` : "/admin/api/dashboard";
     let response: Response;
     try {
       response = await fetch(url);
@@ -133,7 +133,7 @@ export function AdminDashboard() {
       return;
     }
 
-    const response = await fetch(`/api/admin/orders/${selectedOrder.id}/status`, {
+    const response = await fetch(`/admin/api/orders/${selectedOrder.id}/status`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -159,7 +159,7 @@ export function AdminDashboard() {
       return;
     }
 
-    const response = await fetch(`/api/admin/orders/${selectedOrder.id}/production-updates`, {
+    const response = await fetch(`/admin/api/orders/${selectedOrder.id}/production-updates`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -192,7 +192,7 @@ export function AdminDashboard() {
     let response: Response;
 
     try {
-      response = await fetch(`/api/admin/orders/${selectedOrder.id}/proofs`, { method: "POST", body: form });
+      response = await fetch(`/admin/api/orders/${selectedOrder.id}/proofs`, { method: "POST", body: form });
     } catch {
       setMessageKind("error");
       setMessage("Proof upload could not reach the server.");
@@ -232,7 +232,7 @@ export function AdminDashboard() {
     let response: Response;
 
     try {
-      response = await fetch(`/api/admin/orders/${selectedOrder.id}/production-media`, { method: "POST", body: form });
+      response = await fetch(`/admin/api/orders/${selectedOrder.id}/production-media`, { method: "POST", body: form });
     } catch {
       setMessageKind("error");
       setMessage("Production media upload could not reach the server.");

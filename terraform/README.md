@@ -10,7 +10,7 @@ This directory is intended to be the Spacelift-monitored infrastructure root.
 - Cloudflare R2 bucket for private uploads, proofs, generated assets, videos, and model files.
 - Cloudflare Queue for async jobs.
 - Cloudflare Turnstile widget for public forms.
-- Cloudflare Access applications for `/admin*` and `/api/admin*`.
+- Cloudflare Access application for `/admin*`, including the admin API under `/admin/api/*`.
 - AWS SES domain identity and transactional configuration set.
 - Cloudflare DNS records required for SES Easy DKIM, custom MAIL FROM, SPF, and starter DMARC.
 

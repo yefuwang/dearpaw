@@ -28,20 +28,3 @@ resource "cloudflare_zero_trust_access_application" "admin" {
     precedence = 1
   }]
 }
-
-resource "cloudflare_zero_trust_access_application" "admin_api" {
-  account_id               = var.cloudflare_account_id
-  name                     = "Dear Paw admin API"
-  type                     = "self_hosted"
-  domain                   = "${var.domain_name}/api/admin*"
-  session_duration         = "24h"
-  path_cookie_attribute    = false
-  app_launcher_visible     = false
-  skip_interstitial        = true
-  options_preflight_bypass = true
-
-  policies = [{
-    id         = cloudflare_zero_trust_access_policy.admin_email.id
-    precedence = 1
-  }]
-}
