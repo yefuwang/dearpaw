@@ -39,7 +39,10 @@ const {
         <div class="nav-links">
           {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
         </div>
-        <a class="button secondary" href="/order">Create a memorial</a>
+        <div class="nav-actions">
+          <a class="button secondary" href="/track">Track an order</a>
+          <a class="button" href="/order">Create a memorial</a>
+        </div>
       </nav>
     </header>
 
@@ -66,4 +69,3 @@ const {
     </footer>
   </body>
 </html>
-
