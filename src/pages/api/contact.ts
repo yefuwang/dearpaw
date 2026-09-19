@@ -4,7 +4,7 @@ import { sendEmailBestEffort } from "../../lib/email";
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const form = await request.formData();
   const name = String(form.get("name") ?? "").trim();
   const email = String(form.get("email") ?? "").trim();
@@ -33,6 +33,7 @@ export const POST: APIRoute = async ({ request }) => {
       to: env.SES_ADMIN_EMAIL,
       subject: `Dear Paw contact request from ${name}`,
       text: `From: ${name} <${email.toLowerCase()}>\n\n${message}`,
+      requestId: locals.requestId,
     });
   }
 

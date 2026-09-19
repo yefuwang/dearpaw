@@ -120,6 +120,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     to: email,
     subject: "Your Dear Paw memorial draft",
     text: `We saved your memorial draft for ${petName}.\n\nYour order reference is ${orderId}. You can track it at https://dearpaw.rip/track?orderId=${orderId}\n\nYou can add photos from the order page when you are ready.`,
+    requestId: locals.requestId,
   });
 
   logEvent("order_draft_created", {

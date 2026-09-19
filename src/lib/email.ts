@@ -1,10 +1,12 @@
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { env } from "cloudflare:workers";
+import { logEvent } from "./observability";
 
 type EmailInput = {
   to: string;
   subject: string;
   text: string;
+  requestId?: string;
 };
 
 export async function sendEmail(input: EmailInput) {
@@ -36,8 +38,29 @@ export async function sendEmail(input: EmailInput) {
 
 export async function sendEmailBestEffort(input: EmailInput) {
   try {
-    await sendEmail(input);
-  } catch {
+    const sent = await sendEmail(input);
+    if (!sent) {
+      logEvent("email_send_skipped", {
+        requestId: input.requestId,
+        to: input.to,
+        subject: input.subject,
+        reason: "missing_configuration",
+      });
+      return;
+    }
+
+    logEvent("email_sent", {
+      requestId: input.requestId,
+      to: input.to,
+      subject: input.subject,
+    });
+  } catch (error) {
+    logEvent("email_send_failed", {
+      requestId: input.requestId,
+      to: input.to,
+      subject: input.subject,
+      error: error instanceof Error ? error.message : "Unknown SES error",
+    });
     // Email delivery must not fail the underlying customer or admin action.
   }
 }
