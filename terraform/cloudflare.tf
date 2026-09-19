@@ -128,8 +128,8 @@ resource "cloudflare_dns_record" "dmarc" {
   zone_id = cloudflare_zone.site.id
   name    = "_dmarc.${var.domain_name}"
   type    = "TXT"
-  content = "v=DMARC1; p=none; rua=mailto:postmaster@${var.domain_name}"
+  content = "v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@${var.domain_name}"
   ttl     = 300
   proxied = false
-  comment = "Starter DMARC policy for SES; tighten after mail flow is verified"
+  comment = "DMARC quarantine policy for Dear Paw outbound mail"
 }

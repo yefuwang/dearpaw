@@ -55,4 +55,4 @@ in the GitHub Actions `production` environment as `SES_ACCESS_KEY_ID` and
 - If any DNS records already exist in Cloudflare, import them into Terraform state before applying.
 - After the zone is created, set the Cloudflare-assigned name servers at the domain registrar.
 - SES verification can take time after DNS records are created.
-- The DMARC policy starts at `p=none`; tighten it only after SES sending is verified.
+- DMARC uses `p=quarantine` with aggregate reports sent to `dmarc@<domain>`, which is covered by the Email Routing catch-all.
