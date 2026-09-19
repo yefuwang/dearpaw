@@ -47,6 +47,7 @@ Configure these GitHub Actions environment secrets as needed:
 - `SES_ACCESS_KEY_ID`
 - `SES_SECRET_ACCESS_KEY`
 - `SES_FROM_EMAIL`
+- `SES_REPLY_TO_EMAIL`
 - `SES_REGION`
 - `SES_ADMIN_EMAIL`
 
@@ -60,11 +61,12 @@ The Worker uses Amazon SES v2 for draft confirmations and contact notifications.
 npx wrangler secret put SES_ACCESS_KEY_ID
 npx wrangler secret put SES_SECRET_ACCESS_KEY
 npx wrangler secret put SES_FROM_EMAIL
+npx wrangler secret put SES_REPLY_TO_EMAIL
 npx wrangler secret put SES_REGION
 npx wrangler secret put SES_ADMIN_EMAIL
 ```
 
-The IAM credentials need permission for `ses:SendEmail` against the Dear Paw SES identity. Email delivery is best effort; missing or failing SES configuration does not fail customer requests.
+`SES_FROM_EMAIL` identifies the sender, while `SES_REPLY_TO_EMAIL` receives customer replies. The IAM credentials need permission for `ses:SendEmail` against the Dear Paw SES identity. Email delivery is best effort; missing or failing SES configuration does not fail customer requests.
 
 ## Stripe Checkout
 

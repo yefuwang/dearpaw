@@ -17,6 +17,7 @@ interface Env {
   SES_ACCESS_KEY_ID?: string;
   SES_SECRET_ACCESS_KEY?: string;
   SES_FROM_EMAIL?: string;
+  SES_REPLY_TO_EMAIL?: string;
   SES_REGION?: string;
   SES_ADMIN_EMAIL?: string;
   STRIPE_SECRET_KEY?: string;

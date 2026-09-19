@@ -8,7 +8,7 @@ type EmailInput = {
 };
 
 export async function sendEmail(input: EmailInput) {
-  const { SES_ACCESS_KEY_ID: accessKeyId, SES_SECRET_ACCESS_KEY: secretAccessKey, SES_FROM_EMAIL: fromEmail, SES_REGION: region } = env;
+  const { SES_ACCESS_KEY_ID: accessKeyId, SES_SECRET_ACCESS_KEY: secretAccessKey, SES_FROM_EMAIL: fromEmail, SES_REPLY_TO_EMAIL: replyToEmail, SES_REGION: region } = env;
 
   if (!accessKeyId || !secretAccessKey || !fromEmail || !region) {
     return false;
@@ -25,6 +25,7 @@ export async function sendEmail(input: EmailInput) {
   await client.send(
     new SendEmailCommand({
       FromEmailAddress: fromEmail,
+      ReplyToAddresses: replyToEmail ? [replyToEmail] : undefined,
       Destination: { ToAddresses: [input.to] },
       Content: { Simple: { Subject: { Data: input.subject }, Body: { Text: { Data: input.text } } } },
     }),

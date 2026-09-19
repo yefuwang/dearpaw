@@ -38,3 +38,9 @@ variable "admin_emails" {
   type        = list(string)
   default     = ["yefuwang@gmail.com"]
 }
+
+variable "email_routing_destination" {
+  description = "Verified mailbox that receives inbound Dear Paw email through Cloudflare Email Routing."
+  type        = string
+  default     = "yefuwang@gmail.com"
+}

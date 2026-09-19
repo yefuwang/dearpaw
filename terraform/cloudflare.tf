@@ -64,6 +64,34 @@ resource "cloudflare_workers_custom_domain" "apex" {
   zone_name  = cloudflare_zone.site.name
 }
 
+resource "cloudflare_email_routing_settings" "site" {
+  zone_id = cloudflare_zone.site.id
+  enabled = true
+}
+
+resource "cloudflare_email_routing_address" "customer_service" {
+  account_id = var.cloudflare_account_id
+  email      = var.email_routing_destination
+}
+
+resource "cloudflare_email_routing_catch_all" "site" {
+  zone_id = cloudflare_zone.site.id
+  name    = "Dear Paw customer service catch-all"
+  enabled = true
+  source  = "api"
+
+  actions = [{
+    type  = "forward"
+    value = [var.email_routing_destination]
+  }]
+
+  matchers = [{
+    type = "all"
+  }]
+
+  depends_on = [cloudflare_email_routing_address.customer_service]
+}
+
 resource "cloudflare_dns_record" "ses_dkim" {
   count = 3
 

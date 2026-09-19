@@ -13,6 +13,7 @@ This directory is intended to be the Spacelift-monitored infrastructure root.
 - Cloudflare Access application for `/admin*`, including the admin API under `/admin/api/*`.
 - AWS SES domain identity and transactional configuration set.
 - Cloudflare DNS records required for SES Easy DKIM, custom MAIL FROM, SPF, and starter DMARC.
+- Cloudflare Email Routing catch-all forwarding to the customer-service mailbox.
 
 The Worker application code is deployed by GitHub Actions. Terraform owns the custom domain attachment for the deployed `dearpaw` Worker service.
 
@@ -33,6 +34,7 @@ mail_from_subdomain      = "mail"
 d1_primary_location_hint = "wnam"
 r2_location              = null
 admin_emails             = ["you@example.com"]
+email_routing_destination = "you@example.com"
 ```
 
 ## Required Credentials
