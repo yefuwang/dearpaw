@@ -66,7 +66,6 @@ resource "cloudflare_workers_custom_domain" "apex" {
 
 resource "cloudflare_email_routing_dns" "site" {
   zone_id = cloudflare_zone.site.id
-  name    = var.domain_name
 }
 
 resource "cloudflare_email_routing_address" "customer_service" {
