@@ -50,6 +50,16 @@ output "ses_identity_arn" {
   value       = aws_sesv2_email_identity.domain.arn
 }
 
+output "ses_sender_user_name" {
+  description = "IAM user name for the manually managed SES access key."
+  value       = aws_iam_user.ses_sender.name
+}
+
+output "ses_sender_user_arn" {
+  description = "IAM user ARN for the manually managed SES access key."
+  value       = aws_iam_user.ses_sender.arn
+}
+
 output "ses_dkim_tokens" {
   description = "SES Easy DKIM tokens, also used to create Cloudflare CNAME records."
   value       = local.ses_dkim_tokens

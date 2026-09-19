@@ -17,3 +17,25 @@ resource "aws_sesv2_email_identity_mail_from_attributes" "domain" {
   mail_from_domain       = local.mail_from_domain
 }
 
+resource "aws_iam_user" "ses_sender" {
+  name = "${local.project_name}-ses-sender"
+}
+
+resource "aws_iam_policy" "ses_sender" {
+  name        = "${local.project_name}-ses-sender"
+  description = "Allow Dear Paw to send transactional email through SES."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "ses:SendEmail"
+      Resource = aws_sesv2_email_identity.domain.arn
+    }]
+  })
+}
+
+resource "aws_iam_user_policy_attachment" "ses_sender" {
+  user       = aws_iam_user.ses_sender.name
+  policy_arn = aws_iam_policy.ses_sender.arn
+}

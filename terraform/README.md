@@ -41,6 +41,13 @@ admin_emails             = ["you@example.com"]
 - Cloudflare Access resources require the token to include `Access: Apps and Policies Write`.
 - AWS provider uses the standard AWS provider credential chain configured in Spacelift.
 
+Terraform creates the dedicated `dearpaw-ses-sender` IAM user and attaches a policy
+that permits only `ses:SendEmail` for the Dear Paw SES identity. Create and rotate
+that user's access key manually in AWS; do not add an `aws_iam_access_key` resource,
+because its secret would be stored in Terraform state. Store the resulting key pair
+in the GitHub Actions `production` environment as `SES_ACCESS_KEY_ID` and
+`SES_SECRET_ACCESS_KEY`.
+
 ## Notes
 
 - If any DNS records already exist in Cloudflare, import them into Terraform state before applying.
