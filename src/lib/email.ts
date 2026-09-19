@@ -7,6 +7,7 @@ type EmailInput = {
   subject: string;
   text: string;
   requestId?: string;
+  orderId?: string;
 };
 
 export async function sendEmail(input: EmailInput) {
@@ -42,6 +43,7 @@ export async function sendEmailBestEffort(input: EmailInput) {
     if (!sent) {
       logEvent("email_send_skipped", {
         requestId: input.requestId,
+        orderId: input.orderId,
         to: input.to,
         subject: input.subject,
         reason: "missing_configuration",
@@ -51,12 +53,14 @@ export async function sendEmailBestEffort(input: EmailInput) {
 
     logEvent("email_sent", {
       requestId: input.requestId,
+      orderId: input.orderId,
       to: input.to,
       subject: input.subject,
     });
   } catch (error) {
     logEvent("email_send_failed", {
       requestId: input.requestId,
+      orderId: input.orderId,
       to: input.to,
       subject: input.subject,
       error: error instanceof Error ? error.message : "Unknown SES error",
